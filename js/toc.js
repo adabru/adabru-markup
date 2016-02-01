@@ -28,7 +28,8 @@ adabruMarkup.setupToc = function () {
     e.preventDefault()
   })
   $('nav li').click(function(e) {
-    var scrollDiff = $('article').scrollTop() + $($(this).find('a').attr('href')).offset().top + 10
+    var target = $($(this).find('a').attr('href'))
+    var scrollDiff = $('article').scrollTop() + target.offset().top + parseInt(target.css('margin-top')) + parseInt(target.css('border-top-width')) + parseInt(target.css('padding-top')) - 50
     $('article').animate({scrollTop: scrollDiff}, 500); //scroll smoothly to #id
   })
 
