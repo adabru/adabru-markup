@@ -25,7 +25,17 @@ pre textarea {
   display: block;
 }
 pre code {
+  position: relative;
   cursor: pointer;
+}
+pre:hover code::before {
+  content: 'Auswählen oder Klicken zum Kopieren';
+  right: 5px;
+  font-size: .8em;
+  color: #bbb;
+  height: .5em;
+  line-height: 0;
+  position: absolute;
 }
 pre code:active {
   cursor: copy;
@@ -36,18 +46,6 @@ pre.collapsed .code-fade {
   width: 100%;
   box-shadow: 0px -100px 100px -50px #fee inset;
   pointer-events: none;
-}
-pre:hover code .copy-info {
-  top: 0px;
-}
-pre code .copy-info {
-  text-align: right;
-  font-size: .8em;
-  color: #bbb;
-  height: .5em;
-  line-height: 0;
-  position: relative;
-  top: -50px;
 }
 pre.collapsed {
   height: 200px;

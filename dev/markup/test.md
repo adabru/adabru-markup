@@ -43,7 +43,7 @@ text
 
 ⎡./my/iframe.html jaja
 
-```js
+```apache
 inline
 code
 ```

@@ -10,10 +10,6 @@ adabruMarkup.setupCode = function(codepre) {
     var ta = $('<textarea>').html(code.html())
     $(this).append(ta)
 
-    code.prepend(
-      $('<div>').html('Auswählen oder Klicken zum Kopieren&#10;').addClass('copy-info')
-    )
-
     $(this).mouseup( function(event) {
       var selection = window.getSelection().toString()
       var length = 'x'
