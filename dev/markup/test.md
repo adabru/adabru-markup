@@ -1,12 +1,22 @@
 [TOC]
 
+ℹ Hier ist
+eine Information
+
+⚠ Ohoh, hier ist eine große Gefahr
+
 / http://google
 - somefile
+
+ℹ
+jaja so ein beispiel:
 
 /
 - file | info
   - tree | more info
   - almost same | as list
+
+ℹ
 
 text
 - and list

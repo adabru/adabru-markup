@@ -28,7 +28,7 @@ Paperroll <- *(:'\n' | Block )
 
 ### Block Elements
 
-Block <= Slides | Header | Blockquote | Codeblock | Linknote | Filetree | List | Table | Paragraph | Invalid_Block
+Block <= Slides | Header | Blockquote | Codeblock | Linknote | Filetree | List | Table | Info | Warning | Paragraph | Invalid_Block
 
 Slides <- :'---' :?' ' ?Slides_Id :'\n' *((Slides_Multislide | Slides_Item) ?:'--\n') :'---'
 Slides_Id <- +(!'\n' .)
@@ -67,15 +67,18 @@ List_Item <- *(?(&'\n  ' Nextpass :'  ') !'\n' Nextpass)
 List_Item_Nextpass <- *(:'\n' | (Slides | Header | Blockquote | Codeblock | Linknote | List | Table | List_Item_Paragraph | Invalid_Block) )
 List_Item_Paragraph <- +( !('\n\n' | '\n- ') ?:'\n' +(!'\n' (Newline|Span)) )
 
-Paragraph <- +( +(!'\n' (Newline|Span)) ?'\n' )
-Newline <- :'  \n'
-
 Table <- Table_Header Table_Body
 Table_Header <- +(:'|' Table_Header_Item) :'\n'
 Table_Header_Item <- *(!('|'|'\n') Span)
 Table_Body <- *Table_Body_Row
 Table_Body_Row <- !'\n' :?'|' Table_Body_Row_Item *(:'|' Table_Body_Row_Item) :'\n'
 Table_Body_Row_Item <- *(!('|'|'\n') Span)
+
+Info <- (:'ℹ ' Block) | (:'ℹ\n' *(:'\n' | Block ) :'ℹ')
+Warning <- :'⚠ ' Block
+
+Paragraph <- +( +(!'\n' (Newline|Span)) ?'\n' )
+Newline <- :'  \n'
 
 Invalid_Block <- +( +(!'\n' .) '\n')
 

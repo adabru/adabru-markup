@@ -101,15 +101,18 @@ adabruMarkup.printHTML = function (document_ast) {
 			case 'list_Item': return '<li>' + printChildren(ast) + '</li>'
       case 'list_Item_Paragraph': return '<p>' + printChildren(ast) + '</p>'
 
-			case 'paragraph': return '<p>' + printChildren(ast) + '</p>'
-			case 'newline': return '<br/>'
-
       case 'table': return '<table>' + printChildren(ast) + '</table>'
       case 'table_Header': return '<tr>' + printChildren(ast) + '</tr>'
       case 'table_Header_Item': return '<th>' + printChildren(ast) + '</th>'
       case 'table_Body': return printChildren(ast)
       case 'table_Body_Row': return '<tr>' + printChildren(ast) + '</tr>'
       case 'table_Body_Row_Item': return '<td>' + printChildren(ast) + '</td>'
+
+      case 'info': return '<div class="info">' + printChildren(ast) + '</div>'
+      case 'warning': return '<div class="warning">' + printChildren(ast) + '</div>'
+
+      case 'paragraph': return '<p>' + printChildren(ast) + '</p>'
+      case 'newline': return '<br/>'
 
       // span
       case 'hover': return '<span class="hover_span"><img src="' + printChild(ast, 'link_Url', true) + '"/><span>' + printChildren(ast) + '</span></span>'

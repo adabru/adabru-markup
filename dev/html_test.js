@@ -4,10 +4,10 @@
 
 var fs = require('fs');
 
-adabruMarkup = require('../../../js/adabru-markup-core')
+adabruMarkup = require('./bower_components/adabru-markup/js/core')
 
 // read file
-testFile = (process.argv[2] != null) ? process.argv[2] : './src/test.md'
+testFile = (process.argv[2] != null) ? process.argv[2] : './markup/test.md'
 
 
 document = fs.readFileSync(testFile, 'utf8')
