@@ -1,5 +1,10 @@
 [TOC]
 
+|||
+|---|---|
+| `id`¹ | unique
+| `name` | e.g. "Temple of Cerere"
+
 ℹ Hier ist
 eine Information
 
