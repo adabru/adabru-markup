@@ -128,6 +128,8 @@ adabruMarkup.printHTML = function (document_ast) {
 			case 'image_Url': return printChildren(ast)
 			case 'image_Alt': return printChildren(ast)
       case 'apielement': return '<span class="apielement">' + printChildren(ast) + '</span>'
+      case 'keystroke': return '<span class="keystroke">' + printChildren(ast) + '</span>'
+      case 'key': return '<kbd>' + printChildren(ast) + '</kbd>'
       case 'brand': return '<span class="brand">' + printChildren(ast) + '</span>'
       case 'path': return '<span class="path">' + printChildren(ast) + '</span>'
       case 'code': return '<code>' + printChildren(ast) + '</code>'

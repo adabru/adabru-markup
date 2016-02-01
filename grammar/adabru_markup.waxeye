@@ -104,9 +104,11 @@ Image <- :'![' Image_Alt :'](' Image_Url :')'
 Image_Alt <- +(!']' Span)
 Image_Url <- +(!')' .)
 
-Technical <= :'`' (Apielement | Brand | Path | Code) :'`'
+Technical <= :'`' (Apielement | Keystroke | Brand | Path | Code) :'`'
 Apielement <- :'@' +(!'`' .)
 Brand <- +(![™`] .) :'™'
+Keystroke <- :'⌨' +(Key ?:' ')
+Key <- +(![` ] .)
 Path <- +(![⇑`] .) :'↑'
 Code <- +(!'`' .)
 

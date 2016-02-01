@@ -51,6 +51,7 @@ code
 ```js
 ```↑ ./import/me nocomments
 
+`⌨Ctrl e 𐌎`
 `Cocos2D JS™`
 `./images/all_good.gif↑`
 `@Sprite`
