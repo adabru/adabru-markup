@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# this script must be called from parent directory
+
+./bin/waxeye_bin/bin/waxeye -g javascript ../../js/build ./src/adabru_markup.waxeye &
+./bin/waxeye_bin/bin/waxeye -i ./src/adabru_markup.waxeye < ./src/test.md | less

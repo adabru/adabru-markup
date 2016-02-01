@@ -1,0 +1,70 @@
+
+div.code-wrapper {
+  text-align: center;
+}
+
+div.code-wrapper button {
+  position: relative;
+  bottom: 30px;
+  font-size: 14px;
+}
+
+pre {
+  text-align: left;
+  padding: 0px 20px;
+  position: relative;
+  overflow: hidden;
+}
+pre textarea {
+  position: fixed;
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: 0;
+  margin: 0;
+  display: block;
+}
+pre code {
+  cursor: pointer;
+}
+pre code:active {
+  cursor: copy;
+}
+pre.collapsed .code-fade {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  box-shadow: 0px -100px 100px -50px #fee inset;
+  pointer-events: none;
+}
+pre:hover code .copy-info {
+  top: 0px;
+}
+pre code .copy-info {
+  text-align: right;
+  font-size: .8em;
+  color: #bbb;
+  height: .5em;
+  line-height: 0;
+  position: relative;
+  top: -50px;
+}
+pre.collapsed {
+  height: 200px;
+}
+code {
+  font-family: monospace;
+  font-size: 0.8em;
+  color: #644;
+  padding: 0px 5px;
+}
+pre code.hljs {
+  padding-bottom: 30px;
+}
+.copyconfirmation {
+  transform: translate(10px, -20px);
+  pointer-events: none;
+  position: fixed;
+  z-index: 1;
+  color: #bbb;
+}

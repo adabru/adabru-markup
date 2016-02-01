@@ -1,0 +1,22 @@
+{
+  "name": "adabru-markup",
+  "homepage": "https://github.com/adabru/adabru-markup",
+  "authors": [
+    "adabru <b.brunnmeier@gmx.de>"
+  ],
+  "description": "markup language, parser, frontend",
+  "main": "",
+  "moduleType": [],
+  "keywords": [
+    "markup",
+    "parser"
+  ],
+  "license": "Unlicense",
+  "ignore": [
+    "**/.*",
+    "dev"
+  ],
+  "dependencies": {
+    "waxeye": "git://github.com/orlandohill/waxeye#^0.8.1"
+  }
+}

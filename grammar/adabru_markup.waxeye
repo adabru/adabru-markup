@@ -1,0 +1,115 @@
+# waxeye installation (date: 30 Jan 2016)
+# the download from http://sourceforge.net/projects/waxeye/ is not often updated
+# main branch https://github.com/orlandohill/waxeye lacks recursion-reduction, although a pull-request is there to fix it
+# currently https://github.com/JoshuaGross/waxeye should be the best choice
+#
+# git clone --depth 1 --branch master git://github.com/joshuagross/waxeye
+# cd waxeye
+# rm -rf .git
+# sudo apt-get install racket
+# raco link ./src/scheme/waxeye
+# ./build/unix
+#
+# for use in frontend:
+# bower install git://github.com/joshuagross/waxeye.git#1164092ddb
+#
+# for use with nodejs:
+# cd node_modules
+# ln -s ../bower_components/waxeye
+#
+# DOES NOT WORK, code generation (javascript.scm) is not updated by orlando hill, have to wait for it
+#
+# so far I have to use v0.8.1
+
+Document <- *:'\n' ?Tableofcontents Paperroll
+
+Tableofcontents <- :'[TOC]'
+Paperroll <- *(:'\n' | Block )
+
+### Block Elements
+
+Block <= Slides | Header | Blockquote | Codeblock | Linknote | Filetree | List | Table | Paragraph | Invalid_Block
+
+Slides <- :'---' :?' ' ?Slides_Id :'\n' *((Slides_Multislide | Slides_Item) ?:'--\n') :'---'
+Slides_Id <- +(!'\n' .)
+Slides_Multislide <- Slides_Item +(:'-↓\n' Slides_Item)
+Slides_Item <- +(!('--\n' | '---\n' | '-↓\n') (:'\n' | Block ))
+
+Header <= Header_L3 | Header_L2 | Header_L1
+Header_L3 <- :'###' :?' ' *(!'\n' Span)
+Header_L2 <- :'##' :?' ' *(!'\n' Span)
+Header_L1 <- :'#' :?' ' *(!'\n' Span)
+
+Blockquote <- +( :'>' *(!'\n' Nextpass) (&'\n' Nextpass) )
+Blockquote_Nextpass <- *.
+
+Codeblock <- :'```' Codelanguage :'\n' (Codeimport | Codeinline)
+Codeimport <- :'```↑' +(:*' ' !'\n' Codeimport_Option)
+Codeimport_Option <- +(![ \n] .)
+Codeinline <- *(!'```' .) :'```'
+Codelanguage <- *(!'\n' .)
+
+Linknote <- :'[' Link_Text :']: ' Link_Url *:[ \t]
+
+Filetree <- :'/' ?(:' ' Filetree_Basepath) :'\n' &'- ' Filetree_Root
+Filetree_Basepath <- *(!'\n' .)
+Filetree_Root <- +(:'- ' Filetree_Item :?'\n')
+Filetree_Item <- Filetree_Item_File ?(*:' ' :'|' *:' ' Filetree_Item_Description) ?(:'\n' Filetree_Item_Children)
+Filetree_Item_File <- *(!(*:' ' [\n|]) .)
+Filetree_Item_Description <- *(!'\n' Span)
+Filetree_Item_Children <- +(:'  ' +(!'\n' Nextpass) Nextpass)
+Filetree_Item_Children_Nextpass <- +(:'- ' Filetree_Item :?'\n')
+
+List <= List_Ordered | List_Unordered
+List_Ordered <- +( :(+[0-9]) :'. ' List_Item :'\n' )
+List_Unordered <- +(:'- ' List_Item :?'\n')
+List_Item <- *(?(&'\n  ' Nextpass :'  ') !'\n' Nextpass)
+List_Item_Nextpass <- *(:'\n' | (Slides | Header | Blockquote | Codeblock | Linknote | List | Table | List_Item_Paragraph | Invalid_Block) )
+List_Item_Paragraph <- +( !('\n\n' | '\n- ') ?:'\n' +(!'\n' (Newline|Span)) )
+
+Paragraph <- +( +(!'\n' (Newline|Span)) ?'\n' )
+Newline <- :'  \n'
+
+Table <- Table_Header Table_Body
+Table_Header <- +(:'|' Table_Header_Item) :'\n'
+Table_Header_Item <- *(!('|'|'\n') Span)
+Table_Body <- *Table_Body_Row
+Table_Body_Row <- !'\n' :?'|' Table_Body_Row_Item *(:'|' Table_Body_Row_Item) :'\n'
+Table_Body_Row_Item <- *(!('|'|'\n') Span)
+
+Invalid_Block <- +( +(!'\n' .) '\n')
+
+### Span Elements
+
+Span <= Hover | Link | Emphasis | Image | Technical | Iframe | .
+
+Hover <- :'[' Hover_Content :']((' Link_Url :'))'
+Hover_Content <- +(!']' Span)
+
+Link <= Link_Inline | Link_Reference | Link_Auto
+Link_Inline <- :'[' Link_Text :'](' Link_Url :')'
+Link_Reference <- :'[' Link_Text :'][]'
+Link_Auto <- :'<' +(![ >] .) :'>'
+Link_Text <- *(!']' Span)
+Link_Url <- *(![)\n] .)
+
+Emphasis <= Emphasis_Bold  | Emphasis_Italic
+Emphasis_Bold <- :'**' +(!'**' Span) :'**'
+Emphasis_Italic <- :'*' +(!'*' Span) :'*'
+
+Image <- :'![' Image_Alt :'](' Image_Url :')'
+Image_Alt <- +(!']' Span)
+Image_Url <- +(!')' .)
+
+Technical <= :'`' (Apielement | Brand | Path | Code) :'`'
+Apielement <- :'@' +(!'`' .)
+Brand <- +(![™`] .) :'™'
+Path <- +(![⇑`] .) :'↑'
+Code <- +(!'`' .)
+
+Iframe <- :'⎡' +(![ \n] .)
+
+### multi-pass
+
+# I dont know how to parse nested block quotes, lists and filetrees ; they can be resolved in some iterations
+Nextpass <- .

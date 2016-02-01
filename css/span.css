@@ -1,0 +1,43 @@
+
+.hover_span {
+  position: relative;
+}
+.hover_span img {
+  display: none;
+}
+.hover_span:hover img {
+  position: absolute;
+  display: block;
+  max-width: none;
+  z-index: 1;
+}
+a {
+  color: #447;
+}
+
+em {
+  color: #663;
+}
+
+span.apielement {
+  color: #e55;
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 0.9em;
+  background-color: rgba(221, 221, 221, .5);
+  padding: 0px 5px;
+  border-radius: 10px;
+}
+span.brand {
+  font-family: ‘Lucida Sans Unicode’,‘Lucida Grande’,sans-serif;
+  text-shadow: 1px 1px rgb(170, 170, 170);
+}
+span.path {
+  font: small-caption;
+  font-size: .8em;
+  color: #000;
+}
+
+iframe {
+  border: 1px solid green;
+}
