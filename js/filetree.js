@@ -2,6 +2,7 @@
 adabruMarkup.setupFiletree = function(filetreediv) {
   var basepath = $(filetreediv).attr('data-basepath')
 
+  if (basepath == "") { return }
   var prefix = basepath
   var addlinks = function (prefix) {
     var filename = $(this).find('.filename span').first().html()
