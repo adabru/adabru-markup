@@ -21,7 +21,7 @@ nav ul li.highlight a {
   text-shadow: 0 0 5px #70f, 0 0 3px #fff;
 }
 nav ul li {
-  border-bottom: 1px solid #abb;
+  border-top: 1px solid #abb;
 }
 nav ul li:hover {
   background-color: #fff;
@@ -29,6 +29,6 @@ nav ul li:hover {
   padding: 5px;
 }
 nav ul ul li {
-  border-bottom: 0px;
+  border: none;
   padding: 5px 0px;
 }
