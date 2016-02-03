@@ -1,5 +1,7 @@
 [TOC]
 
+![](./image/without.alt)
+
 |||
 |---|---|
 | `id`¹ | unique

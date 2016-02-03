@@ -101,7 +101,7 @@ Emphasis_Bold <- :'**' +(!'**' Span) :'**'
 Emphasis_Italic <- :'*' +(!'*' Span) :'*'
 
 Image <- :'![' Image_Alt :'](' Image_Url :')'
-Image_Alt <- +(!']' Span)
+Image_Alt <- *(!']' Span)
 Image_Url <- +(!')' .)
 
 Technical <= :'`' (Apielement | Keystroke | Brand | Path | Code) :'`'
