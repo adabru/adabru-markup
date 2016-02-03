@@ -75,9 +75,18 @@ adabruMarkup.printHTML = function (document_ast) {
 			case 'slides_Multislide': return '<section class="multislide">' + printChildren(ast, '\n') + '</section>'
 			case 'slides_Item': return '<section>' + printChildren(ast, '\n') + '</section>'
 
-			case 'header_L1': return '<h1>' + printChildren(ast) + '</h1>'
-			case 'header_L2': return '<h2>' + printChildren(ast) + '</h2>'
-			case 'header_L3': return '<h3>' + printChildren(ast) + '</h3>'
+			case 'header_L1':
+        var content = printChildren(ast)
+        var id = escape(content.replace(/<[^>]*>([^<]*)<[^>]*>/g, '$1')).replace(/%/g,'_')
+        return '<h1 id="' + id + '">' + content + '</h1>'
+			case 'header_L2':
+        var content = printChildren(ast)
+        var id = escape(content.replace(/<[^>]*>([^<]*)<[^>]*>/g, '$1')).replace(/%/g,'_')
+        return '<h2 id="' + id + '">' + content + '</h2>'
+			case 'header_L3':
+        var content = printChildren(ast)
+        var id = escape(content.replace(/<[^>]*>([^<]*)<[^>]*>/g, '$1')).replace(/%/g,'_')
+        return '<h3 id="' + id + '">' + content + '</h3>'
       case 'codeblock':
         var language = printChild(ast, 'codelanguage', true)
         ast.children[0].language = language
@@ -193,6 +202,11 @@ adabruMarkup.printHTML = function (document_ast) {
       art.scrollTop(art.scrollTop() - e.deltaY*e.deltaFactor)
       e.preventDefault()
     })
+
+    // scroll to header defined in location.hash
+    var target = $(location.hash)
+    var scrollDiff = $('article').scrollTop() + target.offset().top + parseInt(target.css('margin-top')) + parseInt(target.css('border-top-width')) + parseInt(target.css('padding-top')) - 50
+    $('article').scrollTop(scrollDiff)
 
     // resize iframes
     $('iframe').load(function () {

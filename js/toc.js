@@ -17,9 +17,6 @@ adabruMarkup.setupToc = function () {
         level--
       }
     }
-    h.id = escape(h.innerHTML.replace(/<[^>]*>([^<]*)<[^>]*>/g, '$1')).replace(/%/g,'_')
-    console.log(h.innerHTML)
-    console.log(h.id)
     html += '<li><a href="#' + h.id + '">' + h.innerHTML + '</a></li>'
   }
   $('nav').html(html)
@@ -33,6 +30,7 @@ adabruMarkup.setupToc = function () {
     var target = $($(this).find('a').attr('href'))
     var scrollDiff = $('article').scrollTop() + target.offset().top + parseInt(target.css('margin-top')) + parseInt(target.css('border-top-width')) + parseInt(target.css('padding-top')) - 50
     $('article').animate({scrollTop: scrollDiff}, 500); //scroll smoothly to #id
+    window.history.replaceState(null, null, location.origin + location.pathname + location.search + '#'+target.attr('id'))
   })
 
   // enable current progress
