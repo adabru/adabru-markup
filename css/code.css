@@ -50,6 +50,12 @@ pre.collapsed .code-fade {
 pre.collapsed {
   height: 200px;
 }
+pre + button::before {
+  content: "einrollen";
+}
+pre.collapsed + button::before {
+  content: "ausrollen";
+}
 code {
   font-family: monospace;
   font-size: 0.8em;

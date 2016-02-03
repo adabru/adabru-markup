@@ -40,7 +40,7 @@ adabruMarkup.setupCode = function(codepre) {
 
     var divWrapper = $('<div>').addClass('code-wrapper')
     var shadow = $('<div>').addClass('code-fade')
-    var expandButton = $('<button>').html('ausrollen')
+    var expandButton = $('<button>')
     $(this).after(divWrapper).appendTo(divWrapper)
     $(this).prepend(shadow)
     divWrapper.append(expandButton)
@@ -50,10 +50,8 @@ adabruMarkup.setupCode = function(codepre) {
     expandButton.click(function() {
       if (self.collapsed) {
         $(self).removeClass('collapsed', 400)
-        expandButton.html('einrollen')
       } else {
         $(self).addClass('collapsed', 400)
-        expandButton.html('ausrollen')
         // scroll up
         var scrollDiff = $('article').scrollTop() + $(self).offset().top - 50
         $('article').animate({scrollTop: scrollDiff}, 400)
