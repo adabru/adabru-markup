@@ -17,7 +17,9 @@ adabruMarkup.setupToc = function () {
         level--
       }
     }
-    h.id = escape(h.innerHTML).replace(/%/g,'_')
+    h.id = escape(h.innerHTML.replace(/<[^>]*>([^<]*)<[^>]*>/g, '$1')).replace(/%/g,'_')
+    console.log(h.innerHTML)
+    console.log(h.id)
     html += '<li><a href="#' + h.id + '">' + h.innerHTML + '</a></li>'
   }
   $('nav').html(html)

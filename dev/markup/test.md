@@ -107,6 +107,8 @@ Klick [mich][] jo
 
 [mich]: http://weag.com
 
+## header with [`some` a `code`](./somelink)
+
 Hier ist Bild: ![Tiger hund](http://google.com) jaja
 
 - first
