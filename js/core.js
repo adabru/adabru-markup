@@ -205,8 +205,10 @@ adabruMarkup.printHTML = function (document_ast) {
 
     // scroll to header defined in location.hash
     var target = $(location.hash)
-    var scrollDiff = $('article').scrollTop() + target.offset().top + parseInt(target.css('margin-top')) + parseInt(target.css('border-top-width')) + parseInt(target.css('padding-top')) - 50
-    $('article').scrollTop(scrollDiff)
+    if (target.length > 0) {      
+      var scrollDiff = $('article').scrollTop() + target.offset().top + parseInt(target.css('margin-top')) + parseInt(target.css('border-top-width')) + parseInt(target.css('padding-top')) - 50
+      $('article').scrollTop(scrollDiff)
+    }
 
     // resize iframes
     $('iframe').load(function () {
