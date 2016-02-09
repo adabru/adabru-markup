@@ -1,0 +1,4 @@
+dev/ export-ignore
+grammar/waxeye/ export-ignore
+node_modules/ export-ignore
+.git* export-ignore
