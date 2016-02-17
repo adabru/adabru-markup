@@ -18,7 +18,7 @@
     "!UNLICENSE",
     "!README.md",
     "!grammar/adabru_markup.waxeye",
-    "!js/*",
+    "!js/**",
     "!css/*"
   ],
   "dependencies": {
