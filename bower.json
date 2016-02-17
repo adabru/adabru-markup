@@ -6,7 +6,7 @@
     "adabru <b.brunnmeier@gmx.de>"
   ],
   "description": "markup language, parser, frontend",
-  "main": "",
+  "main": "core.js",
   "moduleType": [],
   "keywords": [
     "markup",
