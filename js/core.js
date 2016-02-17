@@ -1,6 +1,3 @@
-// adabru-markup depends on following external sources:
-//
-// jQuery, knockout, adabru-slides
 
 var adabruMarkup = {}
 
@@ -24,7 +21,6 @@ adabruMarkup.parseDocument = function (document, startNT) {
 	// Parse the input (multi-pass)
   var parser = adabruMarkup.parser
   if(startNT == null) { startNT = 'document' }
-  if(typeof window != 'undefined')  window.parser = parser
 
   var _parseDocument = function (startNT, document) {
     parser.start = parser.automata.findIndex( a => a.type==startNT)
@@ -205,7 +201,7 @@ adabruMarkup.printHTML = function (document_ast) {
 
     // scroll to header defined in location.hash
     var target = $(location.hash)
-    if (target.length > 0) {      
+    if (target.length > 0) {
       var scrollDiff = $('article').scrollTop() + target.offset().top + parseInt(target.css('margin-top')) + parseInt(target.css('border-top-width')) + parseInt(target.css('padding-top')) - 50
       $('article').scrollTop(scrollDiff)
     }

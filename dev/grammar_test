@@ -2,5 +2,5 @@
 
 # this script must be called from parent directory
 
-../grammar/waxeye/bin/waxeye -g javascript ./bower_components/adabru-markup/js/build ./bower_components/adabru-markup/grammar/adabru_markup.waxeye &
-../grammar/waxeye/bin/waxeye -i ./bower_components/adabru-markup/grammar/adabru_markup.waxeye < ./markup/test.md | less
+../grammar/waxeye/bin/waxeye -g javascript ../js/build ../grammar/adabru_markup.waxeye &
+../grammar/waxeye/bin/waxeye -i ../grammar/adabru_markup.waxeye < ./markup/test.md | less

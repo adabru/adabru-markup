@@ -4,7 +4,7 @@
 
 var fs = require('fs');
 
-adabruMarkup = require('./bower_components/adabru-markup/js/core')
+adabruMarkup = require('../js/core')
 
 // read file
 testFile = (process.argv[2] != null) ? process.argv[2] : './markup/test.md'

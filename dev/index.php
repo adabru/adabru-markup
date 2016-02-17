@@ -10,25 +10,7 @@ if(!$_SERVER["QUERY_STRING"]) {
 <!-- css reset -->
 <link rel="stylesheet" href="./bower_components/cssreset/reset.css">
 
-<!-- jQuery -->
-<script src="./bower_components/jquery/dist/jquery.min.js"></script>
-<!-- jquery-mousewheel -->
-<script src="./bower_components/jquery-mousewheel/jquery.mousewheel.min.js"></script>
-<!-- jquery-ui -->
-<script src="./bower_components/jquery-ui/jquery-ui.min.js"></script>
-
-<!-- knockout -->
-<script src="./bower_components/knockout/dist/knockout.js"></script>
-
-<!-- markdown -->
-<!-- <script src="./bower_components/markdown/lib/markdown.js"></script> -->
-
-<!-- waxeye -->
-<script src="./bower_components/waxeye/src/javascript/waxeye.js"></script>
-
-<!-- highlight.js -->
-<script src="./bower_components/highlightjs/highlight.pack.min.js"></script>
-<link rel="stylesheet" href="./bower_components/highlightjs/styles/xcode.css">
+<script src="./bower_components/adabru-markup/js/build/dependency_bundle.js"></script>
 
 <!-- custom -->
 <link rel="stylesheet" href="./bower_components/adabru-markup/css/core.css">

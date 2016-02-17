@@ -4,11 +4,11 @@
 
 // create parser from grammar file
 require('child_process').execSync(`
-  ../grammar/waxeye/bin/waxeye -g javascript ./bower_components/adabru-markup/js/build ./bower_components/adabru-markup/grammar/adabru_markup.waxeye
+  ../grammar/waxeye/bin/waxeye -g javascript ../js/build ../grammar/adabru_markup.waxeye
 `)
 
 var fs = require('fs');
-adabruMarkup = require('./bower_components/adabru-markup/js/core')
+adabruMarkup = require('../js/core')
 
 
 // read file
