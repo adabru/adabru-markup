@@ -1,6 +1,6 @@
 {
   "name": "adabru-markup",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "markup language, parser, frontend",
   "main": "core.js",
   "scripts": {
