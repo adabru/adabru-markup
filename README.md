@@ -25,8 +25,23 @@ Downloading zip from <https://github.com/adabru/adabru-markup> and extracting.
 ### bower + manual
 
 ```html
-<script src=".../core.js"></script>
-<script src ... >
+<!-- load bundled dependencies -->
+<script src="./bower_components/adabru-markup/js/build/dependency_bundle.js"></script>
+
+<script src="./bower_components/adabru-markup/js/build/parser.js"></script>
+<script src="./bower_components/adabru-markup/js/core.js"></script>
+<script src="./bower_components/adabru-markup/js/code.js"></script>
+<script src="./bower_components/adabru-markup/js/filetree.js"></script>
+<script src="./bower_components/adabru-markup/js/slides.js"></script>
+<script src="./bower_components/adabru-markup/js/toc.js"></script>
+
+<link rel="stylesheet" href="./bower_components/adabru-markup/css/core.css">
+<link rel="stylesheet" href="./bower_components/adabru-markup/css/slides.css">
+<link rel="stylesheet" href="./bower_components/adabru-markup/css/toc.css">
+<link rel="stylesheet" href="./bower_components/adabru-markup/css/code.css">
+<link rel="stylesheet" href="./bower_components/adabru-markup/css/span.css">
+<link rel="stylesheet" href="./bower_components/adabru-markup/css/block.css">
+
 
 <script>
 $('body').html( adabruMarkup.parseAndPrint('## Hello \n### World!') )
