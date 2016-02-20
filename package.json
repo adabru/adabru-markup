@@ -1,8 +1,13 @@
 {
   "name": "adabru-markup",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "markup language, parser, frontend",
   "main": "core.js",
+  "files": [
+    "grammar/adabru_markup.waxeye",
+    "js",
+    "css"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
