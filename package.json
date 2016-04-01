@@ -32,7 +32,8 @@
     "jquery": "^2.2.0",
     "jquery-mousewheel": "^3.1.13",
     "jquery-ui": "^1.10.5",
-    "knockout": "^3.4.0"
+    "knockout": "^3.4.0",
+    "waxeye": "http://github.com/adabru/waxeye/tarball/dist"
   },
   "devDependencies": {
     "browserify": "^9.0.8",

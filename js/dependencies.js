@@ -7,7 +7,7 @@ require('jquery-ui/effect-scale')
 
 window.ko = require('knockout')
 window.waxeye = require('waxeye')
-window.hljs = require('highlightjs/highlight.pack') // 400MB!
+window.hljs = require('highlightjs/highlight.pack') // 400KB!
 
 // css
 

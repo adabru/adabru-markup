@@ -20,14 +20,14 @@ var start = (new Date()).getTime()
 adabruMarkup.parseDocument = function (document, startNT) {
 	// Parse the input (multi-pass)
   var parser = adabruMarkup.parser
-  if(startNT == null) { startNT = 'document' }
+  if(startNT == null) { startNT = 'Document' }
 
   var _parseDocument = function (startNT, document) {
-    parser.start = parser.automata.findIndex( a => a.type==startNT)
+    parser.start = startNT
     var ast = parser.parse(document)
 
     adabruMarkup.visit(ast,
-      a => a.children != null && a.children.find(n => n.type=='nextpass') != null,
+      a => a.children != null && a.children.find(n => n.type=='Nextpass') != null,
       a => {
         var toparse = a.children.reduce((ball,x) => ball+x.children[0], '')
         a.children = _parseDocument( a.type+'_Nextpass', toparse ).children
@@ -59,86 +59,86 @@ adabruMarkup.printHTML = function (document_ast) {
   }
 	var printHTML = function(ast) {
 		switch(ast.type) {
-			case 'document': return printChildren(ast, '\n')
+			case 'Document': return printChildren(ast, '\n')
 
-      case 'tableofcontents': return '<nav></nav>'
-      case 'paperroll': return '<article>' + printChildren(ast, '\n') + '</article>'
+      case 'Tableofcontents': return '<nav></nav>'
+      case 'Paperroll': return '<article>' + printChildren(ast, '\n') + '</article>'
 
       // block
 
-			case 'slides': return '<div class="slidewrap" id="' + printChild(ast, 'slides_Id', true) + '"><div>' + printChildren(ast, '\n') + '</div></div>'
-      case 'slides_Id': return printChildren(ast)
-			case 'slides_Multislide': return '<section class="multislide">' + printChildren(ast, '\n') + '</section>'
-			case 'slides_Item': return '<section>' + printChildren(ast, '\n') + '</section>'
+			case 'Slides': return '<div class="slidewrap" id="' + printChild(ast, 'Slides_Id', true) + '"><div>' + printChildren(ast, '\n') + '</div></div>'
+      case 'Slides_Id': return printChildren(ast)
+			case 'Slides_Multislide': return '<section class="multislide">' + printChildren(ast, '\n') + '</section>'
+			case 'Slides_Item': return '<section>' + printChildren(ast, '\n') + '</section>'
 
-			case 'header_L1':
+			case 'Header_L1':
         var content = printChildren(ast)
         var id = escape(content.replace(/<[^>]*>([^<]*)<[^>]*>/g, '$1')).replace(/%/g,'_')
         return '<h1 id="' + id + '">' + content + '</h1>'
-			case 'header_L2':
+			case 'Header_L2':
         var content = printChildren(ast)
         var id = escape(content.replace(/<[^>]*>([^<]*)<[^>]*>/g, '$1')).replace(/%/g,'_')
         return '<h2 id="' + id + '">' + content + '</h2>'
-			case 'header_L3':
+			case 'Header_L3':
         var content = printChildren(ast)
         var id = escape(content.replace(/<[^>]*>([^<]*)<[^>]*>/g, '$1')).replace(/%/g,'_')
         return '<h3 id="' + id + '">' + content + '</h3>'
-      case 'codeblock':
-        var language = printChild(ast, 'codelanguage', true)
+      case 'Codeblock':
+        var language = printChild(ast, 'Codelanguage', true)
         ast.children[0].language = language
         return printChildren(ast)
-      case 'codeimport': return '<pre import="true"><code class="' + ast.language + '">' + printChildren(ast, ' ') + '</code></pre>'
-      case 'codeimport_Option': return printChildren(ast)
-			case 'codeinline': return '<pre><code class="' + ast.language + '">' + printChildren(ast) + '</code></pre>'
-			case 'codelanguage': return printChildren(ast)
-			case 'linknote': return ''
+      case 'Codeimport': return '<pre import="true"><code class="' + ast.language + '">' + printChildren(ast, ' ') + '</code></pre>'
+      case 'Codeimport_Option': return printChildren(ast)
+			case 'Codeinline': return '<pre><code class="' + ast.language + '">' + printChildren(ast) + '</code></pre>'
+			case 'Codelanguage': return printChildren(ast)
+			case 'Linknote': return ''
 
-      case 'filetree': return '<div class="filetree" data-basepath="' + printChild(ast,'filetree_Basepath') + '">' + printChild(ast,'filetree_Root') + '</div>'
-      case 'filetree_Basepath': return printChildren(ast)
-      case 'filetree_Root': return '<ul>' + printChildren(ast, '\n') + '</ul>'
-      case 'filetree_Item': return '<li><div>' + printChild(ast,'filetree_Item_File') + printChild(ast,'filetree_Item_Description') + '</div>' + printChild(ast,'filetree_Item_Children') + '</li>'
-      case 'filetree_Item_File': return '<a class="filename"><span>' + printChildren(ast) + '</span></a>'
-      case 'filetree_Item_Description': return '<span class="filedescription">' + printChildren(ast) + '</span>'
-      case 'filetree_Item_Children': return '<ul>' + printChildren(ast, '\n') + '</ul>'
+      case 'Filetree': return '<div class="filetree" data-basepath="' + printChild(ast,'Filetree_Basepath') + '">' + printChild(ast,'Filetree_Root') + '</div>'
+      case 'Filetree_Basepath': return printChildren(ast)
+      case 'Filetree_Root': return '<ul>' + printChildren(ast, '\n') + '</ul>'
+      case 'Filetree_Item': return '<li><div>' + printChild(ast,'Filetree_Item_File') + printChild(ast,'Filetree_Item_Description') + '</div>' + printChild(ast,'Filetree_Item_Children') + '</li>'
+      case 'Filetree_Item_File': return '<a class="filename"><span>' + printChildren(ast) + '</span></a>'
+      case 'Filetree_Item_Description': return '<span class="filedescription">' + printChildren(ast) + '</span>'
+      case 'Filetree_Item_Children': return '<ul>' + printChildren(ast, '\n') + '</ul>'
 
-      case 'list_Ordered': return '<ol>' + printChildren(ast, '\n') + '</ol>'
-			case 'list_Unordered': return '<ul>' + printChildren(ast, '\n') + '</ul>'
-			case 'list_Item': return '<li>' + printChildren(ast) + '</li>'
-      case 'list_Item_Paragraph': return '<p>' + printChildren(ast) + '</p>'
+      case 'List_Ordered': return '<ol>' + printChildren(ast, '\n') + '</ol>'
+			case 'List_Unordered': return '<ul>' + printChildren(ast, '\n') + '</ul>'
+			case 'List_Item': return '<li>' + printChildren(ast) + '</li>'
+      case 'List_Item_Paragraph': return '<p>' + printChildren(ast) + '</p>'
 
-      case 'table': return '<table>' + printChildren(ast) + '</table>'
-      case 'table_Header': return '<tr>' + printChildren(ast) + '</tr>'
-      case 'table_Header_Item': return '<th>' + printChildren(ast) + '</th>'
-      case 'table_Body': return printChildren(ast)
-      case 'table_Body_Row': return '<tr>' + printChildren(ast) + '</tr>'
-      case 'table_Body_Row_Item': return '<td>' + printChildren(ast) + '</td>'
+      case 'Table': return '<table>' + printChildren(ast) + '</table>'
+      case 'Table_Header': return '<tr>' + printChildren(ast) + '</tr>'
+      case 'Table_Header_Item': return '<th>' + printChildren(ast) + '</th>'
+      case 'Table_Body': return printChildren(ast)
+      case 'Table_Body_Row': return '<tr>' + printChildren(ast) + '</tr>'
+      case 'Table_Body_Row_Item': return '<td>' + printChildren(ast) + '</td>'
 
-      case 'info': return '<div class="info">' + printChildren(ast) + '</div>'
-      case 'warning': return '<div class="warning">' + printChildren(ast) + '</div>'
+      case 'Info': return '<div class="info">' + printChildren(ast) + '</div>'
+      case 'Warning': return '<div class="warning">' + printChildren(ast) + '</div>'
 
-      case 'paragraph': return '<p>' + printChildren(ast) + '</p>'
-      case 'newline': return '<br/>'
+      case 'Paragraph': return '<p>' + printChildren(ast) + '</p>'
+      case 'Newline': return '<br/>'
 
       // span
-      case 'hover': return '<span class="hover_span"><img src="' + printChild(ast, 'link_Url', true) + '"/><span>' + printChildren(ast) + '</span></span>'
-      case 'hover_Content': return printChildren(ast)
-			case 'link_Inline': return '<a href="' + printChild(ast, 'link_Url') + '">' + printChild(ast, 'link_Text') + '</a>'
-			case 'link_Reference': text=printChild(ast, 'link_Text'); return '<a href="' + store.link_reference[text] + '">' + text + '</a>'
-			case 'link_Auto': var url=printChildren(ast); return '<a href="'+url+'">'+url+'</a>'
-			case 'link_Url': return printChildren(ast)
-			case 'link_Text': return printChildren(ast)
-			case 'emphasis_Italic': return '<em>' + printChildren(ast) + '</em>'
-			case 'emphasis_Bold': return '<strong>' + printChildren(ast) + '</strong>'
-			case 'image': return '<img src="' + printChild(ast, 'image_Url') + '" alt="' + printChild(ast, 'image_Alt') + '">'
-			case 'image_Url': return printChildren(ast)
-			case 'image_Alt': return printChildren(ast)
-      case 'apielement': return '<span class="apielement">' + printChildren(ast) + '</span>'
-      case 'keystroke': return '<span class="keystroke">' + printChildren(ast) + '</span>'
-      case 'key': return '<kbd>' + printChildren(ast) + '</kbd>'
-      case 'brand': return '<span class="brand">' + printChildren(ast) + '</span>'
-      case 'path': return '<span class="path">' + printChildren(ast) + '</span>'
-      case 'code': return '<code>' + printChildren(ast) + '</code>'
-      case 'iframe': return '<iframe src="' + printChildren(ast) + '"></iframe>'
+      case 'Hover': return '<span class="hover_span"><img src="' + printChild(ast, 'Link_Url', true) + '"/><span>' + printChildren(ast) + '</span></span>'
+      case 'Hover_Content': return printChildren(ast)
+			case 'Link_Inline': return '<a href="' + printChild(ast, 'Link_Url') + '">' + printChild(ast, 'Link_Text') + '</a>'
+			case 'Link_Reference': text=printChild(ast, 'Link_Text'); return '<a href="' + store.link_reference[text] + '">' + text + '</a>'
+			case 'Link_Auto': var url=printChildren(ast); return '<a href="'+url+'">'+url+'</a>'
+			case 'Link_Url': return printChildren(ast)
+			case 'Link_Text': return printChildren(ast)
+			case 'Emphasis_Italic': return '<em>' + printChildren(ast) + '</em>'
+			case 'Emphasis_Bold': return '<strong>' + printChildren(ast) + '</strong>'
+			case 'Image': return '<img src="' + printChild(ast, 'Image_Url') + '" alt="' + printChild(ast, 'Image_Alt') + '">'
+			case 'Image_Url': return printChildren(ast)
+			case 'Image_Alt': return printChildren(ast)
+      case 'Apielement': return '<span class="apielement">' + printChildren(ast) + '</span>'
+      case 'Keystroke': return '<span class="keystroke">' + printChildren(ast) + '</span>'
+      case 'Key': return '<kbd>' + printChildren(ast) + '</kbd>'
+      case 'Brand': return '<span class="brand">' + printChildren(ast) + '</span>'
+      case 'Path': return '<span class="path">' + printChildren(ast) + '</span>'
+      case 'Code': return '<code>' + printChildren(ast) + '</code>'
+      case 'Iframe': return '<iframe src="' + printChildren(ast) + '"></iframe>'
 			case undefined: return (ast == '<') ? '&lt;' : ast
 			default: return ast.type
 		}

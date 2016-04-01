@@ -4,7 +4,7 @@
 
 // create parser from grammar file
 require('child_process').execSync(`
-  ../grammar/waxeye/bin/waxeye -g javascript ../js/build ../grammar/adabru_markup.waxeye
+  ../grammar/waxeye_fix/bin/waxeye -g javascript ../js/build ../grammar/adabru_markup.waxeye
 `)
 
 var fs = require('fs');
