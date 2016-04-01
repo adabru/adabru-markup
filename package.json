@@ -4,6 +4,7 @@
   "description": "markup language, parser, frontend",
   "main": "core.js",
   "files": [
+    "UNLICENSE",
     "grammar/adabru_markup.waxeye",
     "js",
     "css"
