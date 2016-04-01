@@ -1,3 +1,0 @@
-#!/bin/sh
-
-mzscheme -t src/waxeye/waxeye.scm -- $*

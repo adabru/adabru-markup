@@ -22,6 +22,5 @@
     "!css/*"
   ],
   "dependencies": {
-    "waxeye": "git://github.com/orlandohill/waxeye#^0.8.1"
   }
 }

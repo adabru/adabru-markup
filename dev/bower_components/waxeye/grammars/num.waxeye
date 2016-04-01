@@ -1,3 +1,0 @@
-# Non-negative integers
-
-Num <- '0' | [1-9] *[0-9]
