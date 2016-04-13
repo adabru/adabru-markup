@@ -9,6 +9,8 @@ div.code-wrapper button {
   font-size: 14px;
 }
 
+
+
 pre {
   text-align: left;
   padding: 0px 20px;
@@ -17,8 +19,8 @@ pre {
 }
 pre textarea {
   position: fixed;
-  width: 0;
-  height: 0;
+  width: 1;
+  height: 1;
   padding: 0;
   border: 0;
   margin: 0;
@@ -47,15 +49,20 @@ pre.collapsed .code-fade {
   box-shadow: 0px -100px 100px -50px #fee inset;
   pointer-events: none;
 }
-pre.collapsed {
-  height: 200px;
+pre.collapsed, pre.expanded {
+  transition: all 1s ease;
 }
-pre + button::before {
+
+
+pre.expanded + button::before {
   content: "einrollen";
 }
 pre.collapsed + button::before {
   content: "ausrollen";
 }
+
+
+
 code {
   font-family: monospace;
   font-size: 0.8em;
@@ -65,10 +72,36 @@ code {
 pre code.hljs {
   padding-bottom: 30px;
 }
+
+
+
 .copyconfirmation {
   transform: translate(10px, -20px);
   pointer-events: none;
   position: fixed;
   z-index: 1;
   color: #bbb;
+  opacity: 0;
+}
+.copyconfirmation.flash1 {
+  animation: fader1 1s ease;
+}
+.copyconfirmation.flash2 {
+  animation: fader2 1s ease;
+}
+@keyframes fader1 {
+  0% {
+    opacity: 100;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes fader2 {
+  0% {
+    opacity: 100;
+  }
+  100% {
+    opacity: 0;
+  }
 }

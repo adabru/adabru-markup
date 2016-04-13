@@ -17,11 +17,14 @@ nav ul {
   list-style: none;
   background-color: #edd;
 }
-nav ul li.highlight a {
+nav ul li.highlight {
   text-shadow: 0 0 5px #70f, 0 0 3px #fff;
 }
 nav ul li {
   border-top: 1px solid #abb;
+}
+nav li a {
+  cursor: default;
 }
 nav ul li:hover {
   background-color: #fff;

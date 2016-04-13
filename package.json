@@ -27,25 +27,22 @@
   },
   "homepage": "https://github.com/adabru/adabru-markup#readme",
   "dependencies": {
-    "highlightjs": "^8.7.0",
-    "insert-css": "^0.2.0",
+    "@pleasetrythisathome/react.animate": "http://github.com/pleasetrythisathome/react.animate/tarball/master",
+    "highlight.js": "^9.2.0",
     "jquery": "^2.2.0",
-    "jquery-mousewheel": "^3.1.13",
-    "jquery-ui": "^1.10.5",
-    "knockout": "^3.4.0",
+    "lodash": "^4.8.2",
+    "react": "^15",
+    "react-dom": "^15",
     "waxeye": "http://github.com/adabru/waxeye/tarball/dist"
   },
   "devDependencies": {
-    "browserify": "^9.0.8",
-    "brfs": "^1.4.3",
+    "css-loader": "^0.23.1",
+    "style-loader": "^0.13.1",
+    "coffee-loader": "^0.7.2",
+    "coffee-script": "^1.10.0",
     "gulp": "^3.9.1",
     "gulp-release-tasks": "0.0.3",
-    "gulp-rename": "^1.2.2",
-    "gulp-streamify": "^1.0.2",
-    "gulp-uglify": "^1.5.2",
-    "gulp-watchify": "^0.5.0",
     "html": "0.0.10",
-    "node-lessify": "^0.1.1",
-    "watchify": "^3.7.0"
+    "webpack": "^1.12.15"
   }
 }

@@ -1,4 +1,4 @@
-body {
+#adabruPage {
   background-color: #fff;
   color: #333;
   padding: 0px 10px;
@@ -16,7 +16,7 @@ body {
 
 @media all and (max-width: 640px) {
 
-body {
+ #adabruPage {
           flex-direction: column;
  }
 }
