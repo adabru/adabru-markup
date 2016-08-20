@@ -1,0 +1,42 @@
+\[TOC\]
+[Table Of Contents]
+
+^####.*
+^###.*
+^##.*
+^#.*
+[Headers]
+
+([^`]+?)(\|[^`\|]*)
+[Table]
+
+(\[).*?(\]\(\(?)(.*?)(\)\)?)
+<?[^ ]*://[^ ]*>?
+[Links]
+
+'.*?'
+".*?"
+[Simple Highlighting]
+
+begin "```", end "```"
+[Code]
+
+↑[^ ]*
+`↑.*?`
+[Path]
+
+`.*?`
+[Code]
+
+\*\*.*?\*\*
+[Bold]
+
+\*.*?\*
+[Emphasize]
+
+
+
+
+For using regex in json, previously do search replace with:
+(\[|\]|\{|\}|\||\*|")
+\$1
