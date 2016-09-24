@@ -204,6 +204,8 @@ decorate_parser = (parser, {
 
 export parse = (x, grammar, options={}) ->
   options = {memory:{},startNT:Object.keys(grammar)[0]} `Object.assign` options
+  # clone grammar for further processing
+  grammar = JSON.parse JSON.stringify grammar
 
   # optimization: retrieve first letter ranges of NTs
   min = 0x0000

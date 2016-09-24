@@ -5,7 +5,7 @@
   "main": "core.js",
   "files": [
     "UNLICENSE",
-    "grammar/adabru_markup.waxeye",
+    "grammar/ad_markup.grammar",
     "js",
     "css"
   ],
@@ -32,8 +32,7 @@
     "jquery": "^2.2.0",
     "lodash": "^4.8.2",
     "react": "^15",
-    "react-dom": "^15",
-    "waxeye": "http://github.com/adabru/waxeye/tarball/dist"
+    "react-dom": "^15"
   },
   "devDependencies": {
     "coffee-loader": "^0.7.2",
@@ -42,7 +41,9 @@
     "gulp": "^3.9.1",
     "gulp-release-tasks": "0.0.3",
     "html": "0.0.10",
+    "json-loader": "^0.5.4",
     "livescript": "^1.5.0",
+    "livescript-loader": "^0.1.5",
     "style-loader": "^0.13.1",
     "webpack": "^1.12.15"
   }

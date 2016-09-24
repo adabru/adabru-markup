@@ -1,5 +1,4 @@
 dev/ export-ignore
-grammar/waxeye/ export-ignore
 node_modules/ export-ignore
 gulpfile.js export-ignore
 .git* export-ignore

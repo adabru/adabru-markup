@@ -1,3 +1,4 @@
+#!/usr/bin/env lsc
 
 # helper functions
 require! [util, fs, path]
