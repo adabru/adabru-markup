@@ -10,11 +10,11 @@
 |some|table|item
 an|other||item
 
-ℹ Hier Info
+
+ℹHier Info
 nicht mehr
 
-⚠
-Hier
+⚠ Hier
 Achtung!
 
 🌲 some/name/
@@ -85,4 +85,4 @@ Klick [mich][] jo
 *emqph1*  **emph2**  ***emph3***  `code` 'simple"  highlight'
 ⎡./my/iframe.html
 ![](./image/without.alt)  [Text `code`]((./images/hover.gif))  <http://go.com>
-⌨Ctrl e 𐌎  Cocos2D JS™  ↑./images/nobreak space/all_good.gif ↑/home/adabru/ @Sprite
+⌨Ctrl e 𐌎  Cocos2D JS™  ↑./images/nobreak space/all_good.gif ↑/home/adabru/ @Sprite
