@@ -37,7 +37,7 @@ get_stdin = ->
       while chunk = stdin.read! then res += chunk
     stdin.on 'end', ->
       resolve res
-check_file = (file_path, isok, isempty, iswrong) ->
+check_file = (file_path, isok=->true, isempty=->false, iswrong=->false) ->
   if not file_path? then return isempty!
   try
     fs.accessSync file_path
@@ -63,6 +63,7 @@ check_file = (file_path, isok, isempty, iswrong) ->
       suggestion = fuzzy_files.reduce (a,f) ->
         let dist = levenshtein f, base
           if a[1] < dist then a else [f,dist]
+      ,['',999]
       if suggestion[1] <= base.length/2 then iswrong suggestion[0] else iswrong!
 help = ->
   console.log '''
@@ -86,10 +87,15 @@ if argv.help
   help!
   return
 
+# check grammar newer than generated parser
+if check_file argv.c and check_file argv._[0] and (fs.statSync argv._[0]).mtime.getTime! < (fs.statSync argv.c).mtime.getTime!
+  log 'The generated parser is newer than the grammar definition.'
+  return
+
 # read grammar file
-input = check_file argv._[0],
+valid = check_file argv._[0],
   ->
-    fs.readFileSync argv._[0], {encoding: 'utf8'}
+    true
   ->
     error 'no grammar file specified'
     help!
@@ -99,11 +105,12 @@ input = check_file argv._[0],
     if suggestion? then log "did you mean '#{colors.bold suggestion}'?"
     help!
     false
-if not input then return
+if not valid then return
+input = fs.readFileSync argv._[0], {encoding: 'utf8'}
 
 # parse  grammar
 abpv1_grammar = require './abpv1.json'
-abpv1 = require './abpv1.ls'
+abpv1 = require './abpv1.js'
 memory = {name: 'memory'}
 inspect_parse = (ast, memory, x) ->
   {f,inv,bold} = colors

@@ -25,6 +25,8 @@ module.exports = {
         // NODE_ENV: JSON.stringify('production')
        }
     })
+    // better jsmin, is faster!
+    //
     // ,new webpack.optimize.UglifyJsPlugin({
     //     compress: {
     //         warnings: false

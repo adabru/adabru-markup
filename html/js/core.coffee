@@ -2,7 +2,7 @@ React = require 'react'
 ReactDOM = require 'react-dom'
 ReactDOMServer = require 'react-dom/server'
 ab_markup_grammar = require './build/ab_markup_grammar.json'
-abpv1 = require '../../parser/abpv1.ls'
+abpv1 = require '../../parser/build/abpv1.js'
 {span, nav, li, a, ol, ul, h1, h2, h3, p, div, br, strong, em, code, kbd, img, table, tbody, tr, th, td, iframe} = React.DOM
 
 if window? then Object.assign window, {

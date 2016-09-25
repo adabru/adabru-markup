@@ -4,3 +4,13 @@ adabrumarkup.js.map
 *.bak
 *~
 .hidden
+
+parser/*.js
+parser/test/
+parser/bootstrap/
+parser/feature/
+parser/build/
+
+html/js/build
+
+dev/grammar_test.oracle

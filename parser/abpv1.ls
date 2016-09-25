@@ -265,7 +265,7 @@ export parse = (x, grammar, options={}) ->
       case 'multipass'
         first_letter grammar,memory,p[0]
       case 'nonterminal'
-        if memory[p]? then memory[p] else memory[p]=first_letter grammar,memory,grammar[p]
+        memory[p] ? memory[p]=first_letter grammar,memory,grammar[p]
   first_letter_map = {}
   for k of grammar
     first_letter_map[k] ?= first_letter grammar,first_letter_map,grammar[k]
