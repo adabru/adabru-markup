@@ -62,3 +62,8 @@ Downloading zip from https://github.com/adabru/adabru-markup and extracting.
 
 - benchmarks
   └▪./dev/benchmark_test.js↵
+
+### Releasing
+
+└▪npm version [major | minor | patch | …]↵
+└▪git push↵
