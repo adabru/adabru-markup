@@ -28,7 +28,7 @@ Codelanguage ← (!'\n' .)*
 
 Linknote ← :'[' Link_Text :']: ' Link_Url :[ \t]*
 
-Filetree ← :'/' (:' ' Filetree_Basepath)? :'\n' &'- ' Filetree_Root
+Filetree ← :'🌲' (:' ' Filetree_Basepath)? :'\n' &'- ' Filetree_Root
 Filetree_Basepath ← (!'\n' .)*
 Filetree_Root ← (:'- ' Filetree_Item :'\n'?)+
 Filetree_Item ← Filetree_Item_File (:' '* :'|' :' '* Filetree_Item_Description)? (:'\n' Filetree_Item_Children)?

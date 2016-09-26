@@ -15,7 +15,8 @@ module.exports = {
   output: {
     filename: './html/js/build/adabrumarkup.js',
     library: 'adabruMarkup',
-    libraryTarget: 'commonjs2'
+    libraryTarget: 'var'
+    // libraryTarget: 'commonjs2'
   },
   externals: [
     'ease'
@@ -23,7 +24,7 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin({
       'process.env': {
-        // BROWSER: JSON.stringify(true)
+        BROWSER: JSON.stringify(true)
         // NODE_ENV: JSON.stringify('production')
        }
     })
@@ -38,10 +39,6 @@ module.exports = {
           callback()
       })})
     }
-    // ,new webpack.optimize.UglifyJsPlugin({
-    //     compress: {
-    //         warnings: false
-    //     }
-    // })
+    // ,new webpack.optimize.UglifyJsPlugin({compress: {warnings: false}})
   ]
 }

@@ -88,119 +88,129 @@ if argv.help
   return
 
 # check grammar newer than generated parser
-if check_file argv.c and check_file argv._[0] and (fs.statSync argv._[0]).mtime.getTime! < (fs.statSync argv.c).mtime.getTime!
+grammar_up_to_date = check_file argv.c and check_file argv._[0] and (fs.statSync argv._[0]).mtime.getTime! < (fs.statSync argv.c).mtime.getTime!
+if grammar_up_to_date
   log 'The generated parser is newer than the grammar definition.'
-  return
+  grammar = JSON.parse fs.readFileSync argv.c, {encoding: 'utf8'}
+  abpv1 = require './abpv1.js'
+else
+  # read grammar file
+  valid = check_file argv._[0],
+    ->
+      true
+    ->
+      error 'no grammar file specified'
+      help!
+      false
+    (suggestion) ->
+      error "grammar file '#{argv._[0]}' does not exist"
+      if suggestion? then log "did you mean '#{colors.bold suggestion}'?"
+      help!
+      false
+  if not valid then return
+  input = fs.readFileSync argv._[0], {encoding: 'utf8'}
 
-# read grammar file
-valid = check_file argv._[0],
-  ->
-    true
-  ->
-    error 'no grammar file specified'
-    help!
-    false
-  (suggestion) ->
-    error "grammar file '#{argv._[0]}' does not exist"
-    if suggestion? then log "did you mean '#{colors.bold suggestion}'?"
-    help!
-    false
-if not valid then return
-input = fs.readFileSync argv._[0], {encoding: 'utf8'}
+  # parse  grammar
+  abpv1_grammar = require './abpv1.json'
+  abpv1 = require './abpv1.js'
+  memory = {name: 'memory'}
+  inspect_parse = (ast, memory, x) ->
+    {f,inv,bold} = colors
+    line_lengths = (x.split '\n').map (s)->s.length
+    line_and_col = (pos) ->
+      for len,i in line_lengths
+        if pos < len then return [i,pos] else pos -= len+1
+    todo 'better suggestions here than just going through the buffer, e.g. some statistically trained suggestions'
+    log '<number>+<Enter> move to character OR <Enter> leave'
+    short_print = (ast, indent=0) ->
+      s = ' '.repeat indent
+      s += "#{}#{ast.name} #{if ast.status == 'success' then '✔' else '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} "
+      t = x.substring ast.start, ast.end
+      t = if t.length < 60 then "#{f.2 t}" else "#{f.2 t.substr 0,25}…#{f.2 t.substr -25,25}"
+      s += t.replace /\n/g, inv 'n'
+      s += ""
+      t = x.substring ast.end, ast.lookAhead
+      t = if t.length < 20 then "#{f.3 t}" else "#{f.3 t.substr 0,8}…#{f.3 t.substr -8,8}"
+      s += t.replace /\n/g, inv 'n'
+      log s
+      if ast.status == 'fail' then for c in ast.children
+        short_print c, indent+1
+    state = {pos: 1}
+    process.stdin.setEncoding 'utf8'
+    process.stdin.setRawMode true
+    process.stdin.on 'data', (d) ->
+      i = state.pos
+      switch d
+        case '\u0003' then process.exit!
+        case '\u001b[D' then state.pos--
+        case '\u001b[C' then state.pos++
+        case '0','1','2','3','4','5','6','7','8','9' then state.pos = (state.pos+d) .|. 0
+        case '\u007f'
+          s = ''+state.pos
+          state.pos = if s.length<=1 then 0 else 0 .|. s.substr 0, s.length-1
+        case '\r' then process.stdin.pause!
+      state.pos = (state.pos >? 0) <? x.length-1
+      if i != state.pos
+        let [l,c] = line_and_col state.pos
+          log "#{bold state.pos}: line #{bold l}, col #{bold c} #{f.2 x.slice state.pos-4>?0, state.pos}#{f.2 bold x.substr state.pos, 1}#{f.2 x.substr state.pos+1, 4}".replace /\n/g, inv 'n'
+        if memory[state.pos]? then for nt of memory[state.pos] then short_print memory[state.pos][nt]
+  ast = abpv1.parse input, abpv1_grammar, {memory:memory}
+  if ast.status == 'fail'
+    error 'failed to parse grammar.'
+    if not argv.d? then
+      log 'use option -d to see more information'
+    else
+      inspect_parse ast, memory[util.hash input], input
+    return
 
-# parse  grammar
-abpv1_grammar = require './abpv1.json'
-abpv1 = require './abpv1.js'
-memory = {name: 'memory'}
-inspect_parse = (ast, memory, x) ->
-  {f,inv,bold} = colors
-  line_lengths = (x.split '\n').map (s)->s.length
-  line_and_col = (pos) ->
-    for len,i in line_lengths
-      if pos < len then return [i,pos] else pos -= len+1
-  todo 'better suggestions here than just going through the buffer, e.g. some statistically trained suggestions'
-  log '<number>+<Enter> move to character OR <Enter> leave'
-  short_print = (ast, indent=0) ->
-    s = ' '.repeat indent
-    s += "#{}#{ast.name} #{if ast.status == 'success' then '✔' else '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} "
-    t = x.substring ast.start, ast.end
-    t = if t.length < 60 then "#{f.2 t}" else "#{f.2 t.substr 0,25}…#{f.2 t.substr -25,25}"
-    s += t.replace /\n/g, inv 'n'
-    s += ""
-    t = x.substring ast.end, ast.lookAhead
-    t = if t.length < 20 then "#{f.3 t}" else "#{f.3 t.substr 0,8}…#{f.3 t.substr -8,8}"
-    s += t.replace /\n/g, inv 'n'
-    log s
-    if ast.status == 'fail' then for c in ast.children
-      short_print c, indent+1
-  state = {pos: 1}
-  process.stdin.setEncoding 'utf8'
-  process.stdin.setRawMode true
-  process.stdin.on 'data', (d) ->
-    i = state.pos
-    switch d
-      case '\u0003' then process.exit!
-      case '\u001b[D' then state.pos--
-      case '\u001b[C' then state.pos++
-      case '0','1','2','3','4','5','6','7','8','9' then state.pos = (state.pos+d) .|. 0
-      case '\u007f'
-        s = ''+state.pos
-        state.pos = if s.length<=1 then 0 else 0 .|. s.substr 0, s.length-1
-      case '\r' then process.stdin.pause!
-    state.pos = (state.pos >? 0) <? x.length-1
-    if i != state.pos
-      let [l,c] = line_and_col state.pos
-        log "#{bold state.pos}: line #{bold l}, col #{bold c} #{f.2 x.slice state.pos-4>?0, state.pos}#{f.2 bold x.substr state.pos, 1}#{f.2 x.substr state.pos+1, 4}".replace /\n/g, inv 'n'
-      if memory[state.pos]? then for nt of memory[state.pos] then short_print memory[state.pos][nt]
-ast = abpv1.parse input, abpv1_grammar, {memory:memory}
-if ast.status == 'fail'
-  error 'failed to parse grammar.'
-  if not argv.d? then
-    log 'use option -d to see more information'
-  else
-    inspect_parse ast, memory[util.hash input], input
-  return
+  # build grammar from raw ast
+  grammar = {}
+  to_grammar = (ast) ->
+    switch ast.name
+      case 'PASS' then func: 'multipass', params:[ast.children.map to_grammar]
+      case 'ALT' then func: 'alternative', params:[ast.children.map to_grammar]
+      case 'SEQ' then func: 'sequence', params:[ast.children.map to_grammar]
+      case 'AND' then func: 'and', params: [to_grammar ast.children[0]]
+      case 'NOT' then func: 'not', params: [to_grammar ast.children[0]]
+      case 'VOID' then func: 'void', params: [to_grammar ast.children[0]]
+      case 'OPT' then func: 'optional', params: [to_grammar ast.children[0]]
+      case 'STAR' then func: 'star', params: [to_grammar ast.children[0]]
+      case 'PLUS' then func: 'plus', params: [to_grammar ast.children[0]]
+      case 'NT' then func: 'nonterminal', params: [ast.children[0]]
+      case 'T'
+        func: 'terminal'
+        params: switch ast.children[0][0]
+            case '.' then [null]
+            case '\''
+              t = ast.children[0].substr 1, ast.children[0].length-2
+              specials = '\\b':'\b', '\\f':'\f', '\\n':'\n', '\\O':'\O', '\\r':'\r', '\\t':'\t', '\\v':'\v', '\\\'':'\'', '\\\\':'\\'
+              for k of specials then t = t.replace k, specials[k]
+              [t]
+            case '['
+              specials = '\\b':'\b', '\\f':'\f', '\\n':'\n', '\\O':'\O', '\\r':'\r', '\\t':'\t', '\\v':'\v', '\\]':']', '\\\\':'\\'
+              t = ast.children[0].substr 1, ast.children[0].length-2
+              for k of specials then t = t.replace k, specials[k]
+              res = []
+              i = 0
+              if t[i] == '^' then res ++= t[i++]
+              while i < t.length then switch
+                case t[i+1] == '-' then res ++= t[i]+t[(i+=3)-1]
+                default then res ++= t[i]+t[i++]
+              [res]
+  for rule in ast.children
+    flags = {}
+    nt = rule.children[0].children[0]
+    if rule.children[1] == '↖' then flags.pruned = true
+    grammar[nt] = flags: flags
+    grammar[nt]{func, params} = to_grammar rule.children[2]
 
-# build grammar from raw ast
-grammar = {}
-to_grammar = (ast) ->
-  switch ast.name
-    case 'PASS' then func: 'multipass', params:[ast.children.map to_grammar]
-    case 'ALT' then func: 'alternative', params:[ast.children.map to_grammar]
-    case 'SEQ' then func: 'sequence', params:[ast.children.map to_grammar]
-    case 'AND' then func: 'and', params: [to_grammar ast.children[0]]
-    case 'NOT' then func: 'not', params: [to_grammar ast.children[0]]
-    case 'VOID' then func: 'void', params: [to_grammar ast.children[0]]
-    case 'OPT' then func: 'optional', params: [to_grammar ast.children[0]]
-    case 'STAR' then func: 'star', params: [to_grammar ast.children[0]]
-    case 'PLUS' then func: 'plus', params: [to_grammar ast.children[0]]
-    case 'NT' then func: 'nonterminal', params: [ast.children[0]]
-    case 'T'
-      func: 'terminal'
-      params: switch ast.children[0][0]
-          case '.' then [null]
-          case '\''
-            t = ast.children[0].substr 1, ast.children[0].length-2
-            specials = '\\b':'\b', '\\f':'\f', '\\n':'\n', '\\O':'\O', '\\r':'\r', '\\t':'\t', '\\v':'\v', '\\\'':'\'', '\\\\':'\\'
-            for k of specials then t = t.replace k, specials[k]
-            [t]
-          case '['
-            specials = '\\b':'\b', '\\f':'\f', '\\n':'\n', '\\O':'\O', '\\r':'\r', '\\t':'\t', '\\v':'\v', '\\]':']', '\\\\':'\\'
-            t = ast.children[0].substr 1, ast.children[0].length-2
-            for k of specials then t = t.replace k, specials[k]
-            res = []
-            i = 0
-            if t[i] == '^' then res ++= t[i++]
-            while i < t.length then switch
-              case t[i+1] == '-' then res ++= t[i]+t[(i+=3)-1]
-              default then res ++= t[i]+t[i++]
-            [res]
-for rule in ast.children
-  flags = {}
-  nt = rule.children[0].children[0]
-  if rule.children[1] == '↖' then flags.pruned = true
-  grammar[nt] = flags: flags
-  grammar[nt]{func, params} = to_grammar rule.children[2]
+  # write parser to file
+  switch argv.c
+    case true then log JSON.stringify grammar
+    case void then
+    default
+      fs.writeFileSync argv.c, JSON.stringify grammar
+      log "written file '#{colors.bold that}'"
 
 # parse/interpret user specified input with fresh grammar
 promise = switch argv.i
@@ -236,11 +246,3 @@ promise?.then (s) ->
           s += '\n' + prefix + (short_print prefix, c)
         s
     log short_print '',ast
-
-# write parser to file
-switch argv.c
-  case true then log JSON.stringify grammar
-  case void then
-  default
-    fs.writeFileSync argv.c, JSON.stringify grammar
-    log "written file '#{colors.bold that}'"

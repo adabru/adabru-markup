@@ -10,6 +10,7 @@ args = process.argv.slice 2
 if args.0 != '--create-oracle'
   child_process.execSync 'node ./parser/generator.js ./grammar/ab_markup.grammar -d -c ./html/js/build/ab_markup_grammar.json -i ./grammar/informal_spec', encoding:'utf-8',stdio:'inherit'
 
+
 abpv1 = require '../parser/abpv1.js'
 grammar = require '../html/js/build/ab_markup_grammar.json'
 input = fs.readFileSync './grammar/informal_spec', {encoding: 'utf8'}

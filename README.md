@@ -55,7 +55,7 @@ Downloading zip from https://github.com/adabru/adabru-markup and extracting.
 ### Testing
 
 - start test server on 'localhost:133'
-  └▪./dev/start_dev.sh↵
+  └▪php -e -S 127.0.0.1:3456 -t ./dev↵
 
 - grammar modification
   └▪./dev/grammar_test.ls↵

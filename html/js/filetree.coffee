@@ -60,6 +60,5 @@ AdabruFiletree = React.createClass
           Object.assign({}, childProps, {'prefix': @props.basepath, 'key': childProps.file})
         ) for childProps in @props.children
 
-Object.assign exports ? this, {
+Object.assign exports ? this,
   AdabruFiletree: AdabruFiletree
-}

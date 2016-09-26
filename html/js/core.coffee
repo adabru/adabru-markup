@@ -3,14 +3,14 @@ ReactDOM = require 'react-dom'
 ReactDOMServer = require 'react-dom/server'
 ab_markup_grammar = require './build/ab_markup_grammar.json'
 abpv1 = require '../../parser/abpv1.js'
-
-
+#
+#
 {span, nav, li, a, ol, ul, h1, h2, h3, p, div, br, strong, em, code, kbd, img, table, tbody, tr, th, td, iframe} = React.DOM
-
 if window? then Object.assign window, {
   React: React
-  ReactDOM: React
-  parse: parse
+  ReactDOM: ReactDOM
+  abpv1: abpv1
+  grammar: ab_markup_grammar
 }
 
 {AdabruTableofcontents, AdabruArticle} = require './toc.coffee'
@@ -86,10 +86,10 @@ adabruMarkup =
     @visit(
       ast
       (ast) =>
-        ast.children?.some((c) -> c.type == undefined) and ast.children?.length > 1
+        ast.children?.some((c) -> c.name == undefined) and ast.children?.length > 1
       (ast) =>
         for i in [ast.children.length-1 .. 1]
-          if ast.children[i].type == undefined and ast.children[i-1].type == undefined
+          if ast.children[i].name == undefined and ast.children[i-1].name == undefined
             ast.children[i-1] += ast.children.splice(i,1)
     )
 
@@ -100,7 +100,7 @@ adabruMarkup =
     @visit(
       ast
       (ast) =>
-        ast.type == 'Linknote'
+        ast.name == 'Linknote'
       (ast) =>
         @store.linkReference[@printChild(ast, 'Link_Text')] = @printChild(ast, 'Link_Url')
     )
@@ -112,10 +112,10 @@ adabruMarkup =
     if filter(ast) then action(ast)
     if ast.children? then ast.children.forEach((child) -> adabruMarkup.visit(child, filter, action))
 
-  getChild: (ast, type) ->
-    ast.children?.find (c) -> c.type == type
-  printChild: (ast, type) ->
-    @getChild(ast, type)?.children[0]
+  getChild: (ast, name) ->
+    ast.children?.find (c) -> c.name == name
+  printChild: (ast, name) ->
+    @getChild(ast, name)?.children[0]
   printChildren: (ast) ->
     if ast.children.length == 1
       @printTree(ast.children[0])
@@ -128,10 +128,10 @@ adabruMarkup =
           t
 
   unknownAST: (ast) ->
-    console.warn 'Nonterminal "'+ast.type+'" is not known!'
+    console.warn 'Nonterminal "'+ast.name+'" is not known!'
 
   printTree: (ast) ->
-    switch ast.type
+    switch ast.name
       when 'Document'
         React.createElement( AdabruPage, {
           showTOC: @getChild(ast, 'Tableofcontents')?
@@ -147,9 +147,9 @@ adabruMarkup =
         React.createElement( AdabruSlides, {
           id: @printChild(ast, 'Slides_Id')
           slides: ast.children
-            .filter (c) => c.type != 'Slides_Id'
+            .filter (c) => c.name != 'Slides_Id'
             .map (c) =>
-              switch c.type
+              switch c.name
                 when 'Slides_Multislide'
                   single.children.map(@printTree,@) for single in c.children
                 when 'Slides_Item'
@@ -159,7 +159,7 @@ adabruMarkup =
         })
 
       when 'Header_L1', 'Header_L2', 'Header_L3'
-        level = ast.type[ast.type.length-1]
+        level = ast.name[ast.name.length-1]
         processedChildren = @printChildren ast
         [h1,h2,h3][level-1](
           id: ReactDOMServer .renderToStaticMarkup(div({},processedChildren)) .replace(/<.*?>(.*?)<.*?>/g, '$1').replace(/ /g,'_')
@@ -171,7 +171,7 @@ adabruMarkup =
           syntax: @printChild(ast, 'Codelanguage')
           import: if (c=@getChild(ast, 'Codeimport'))?
             c.children.map (cc) ->
-              if cc.type != 'Codeimport_Option' then console.log 'warning: "Codeimport_Option" expected but got '+cc.type
+              if cc.name != 'Codeimport_Option' then console.log 'warning: "Codeimport_Option" expected but got '+cc.name
               cc.children.join('')
           content: if (c=@getChild(ast, 'Codeinline'))?
             c.children.join('')

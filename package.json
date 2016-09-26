@@ -29,7 +29,6 @@
   "dependencies": {
     "@pleasetrythisathome/react.animate": "http://github.com/pleasetrythisathome/react.animate/tarball/master",
     "highlight.js": "^9.2.0",
-    "jquery": "^2.2.0",
     "lodash": "^4.8.2",
     "react": "^15",
     "react-dom": "^15"

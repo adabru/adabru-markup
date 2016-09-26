@@ -63,7 +63,7 @@ AdabruTableofcontents = React.createClass
 AdabruArticle = React.createClass
   displayName: '_Article'
   mixins: [React.Animate]
-  getDefaultProps: -> {
+  getDefaultProps: ->
     items: [
       h1({id: 'a'}, 'uov')
       p({id: 'b'}, 'uocl')
@@ -74,10 +74,8 @@ AdabruArticle = React.createClass
       time: (new Date).getTime()
     onScrolled: (id) ->
       console.log 'onScrolled not assigned'
-  }
-  getInitialState: -> {
+  getInitialState: ->
     scrollTop: 0
-  }
   componentDidMount: ->
     # global scrolling
     window.document.addEventListener 'wheel', (event) =>
@@ -114,7 +112,6 @@ AdabruArticle = React.createClass
     else
       console.warn 'There is no ref to a top-level element with id: "'+id+'"!'
 
-Object.assign exports ? this, {
+Object.assign exports ? this,
   AdabruTableofcontents: AdabruTableofcontents
   AdabruArticle: AdabruArticle
-}

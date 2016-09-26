@@ -1,6 +1,6 @@
 <?php
 if(!$_SERVER["QUERY_STRING"]) {
-  header('Location: ./?test.md');
+  header('Location: ./?bower_components/adabru-markup/grammar/informal_spec');
   die();
 }
 ?>
@@ -10,7 +10,7 @@ if(!$_SERVER["QUERY_STRING"]) {
 <!-- css reset -->
 <link rel="stylesheet" href="./bower_components/cssreset/reset.css">
 
-<script src="./bower_components/adabru-markup/js/build/adabrumarkup.js"></script>
+<script src="./bower_components/adabru-markup/html/js/build/adabrumarkup.js"></script>
 
 <body>
   <div id='app'>
@@ -18,7 +18,7 @@ if(!$_SERVER["QUERY_STRING"]) {
 </body>
 
 <script>
-  var mdfilepath = 'markup/<?php echo $_SERVER["QUERY_STRING"] ?>'
+  var mdfilepath = '<?php echo $_SERVER["QUERY_STRING"] ?>'
 
   fetch(mdfilepath, {method: 'get'}).then( r => r.text() ).then( data =>
     {
