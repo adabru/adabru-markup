@@ -13,8 +13,8 @@ if window? then Object.assign window, {
   grammar: ab_markup_grammar
 }
 
-{AdabruTableofcontents, AdabruArticle} = require './toc.coffee'
-{AdabruFiletree} = require './filetree.coffee'
+{AdabruTableofcontents, AdabruArticle} = require './toc.ls'
+{AdabruFiletree} = require './filetree.ls'
 {AdabruCodeContainer} = require './code.coffee'
 {AdabruSlides} = require './slides.coffee'
 
@@ -138,7 +138,7 @@ adabruMarkup =
           topItems: @getChild(ast, 'Paperroll')
             .children.map @printTree, @
             .filter (c) => c?
-            .map((c,i) => React.cloneElement(c, {id: c.props.id ? i, ref: i}))
+            .map((c,i) => React.cloneElement(c, {id: (c.props.id ? '')+'_'+i, ref: i}))
         })
 
       # blocks
@@ -182,6 +182,7 @@ adabruMarkup =
       when 'Filetree'
         React.createElement( AdabruFiletree, {
           basepath: @printChild(ast, 'Filetree_Basepath')
+          autolink: @getChild(ast, 'Filetree_Is_Auto_Link')?
           children: @getChild(ast, 'Filetree_Root').children.map(@printTree,@)
         })
       when 'Filetree_Item' then {

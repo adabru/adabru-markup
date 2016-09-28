@@ -1,10 +1,8 @@
 [TOC]
-## block level
 
 # Harhar
 ## hi jo
 ### jaja
-#### uiaeuiae
 
 |some|header
 |some|table|item
@@ -23,14 +21,10 @@ tree more info
   almost same as list
 
 🌲 ↑http://auto/link/
-  some/image.png example image
-
-
-🌲
-or not
-  as list!
+some/image.png example image
 
 some text
+
 - multi
   - level
     - unordered list
@@ -80,7 +74,6 @@ Klick [mich][] jo
 > > with other
 > > citation
 
-## inline spans:
 
 *emqph1*  **emph2**  ***emph3***  `code` 'simple"  highlight'
 ⎡./my/iframe.html

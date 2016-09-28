@@ -7,30 +7,6 @@ _ = require 'lodash'
 if process.env.BROWSER?
   require '../css/toc.css'
 
-#    [                ]←interval      [                ][                 ][                ]      [               ]
-#    ✓ pass ✗ block                   ✓  •––––✗•–––––––✓  •––✗•–––✗•––––––✓                        ✓
-
-#    [                ]←interval      [                ]   [                 ]
-#    ✓ pass ✗ block                   ✓  ✗      ✗    ✗     ✓      ✗
-# intervalBarrier = (passFunc, blockFunc, interval=1000) ->
-#   state = {passFunc, blockFunc, interval, lastPassed=0}
-#
-#   (args) ->
-#     if state.timeout?
-#       blockFunc args
-#     else
-#       state.args = args
-#       now = new Date! .getTime!
-#       timeToWait = (state.lastPassed + state.interval) - now   >?   0
-#       state.timeout = setTimeout
-#         (state,_) -->
-#           state.timeout = void
-#           state.lastPassed = new Date! .getTime!
-#           state.passFunc state.args
-#         (state)
-#         , timeToWait
-
-
 
 AdabruTableofcontents = React.createClass do
   displayName: '_Tableofcontents'
@@ -45,22 +21,25 @@ AdabruTableofcontents = React.createClass do
       console.log 'onItemClick not assigned'
     highlightId: null
   render: ->
-    build = (item) ~>
-      li do
-        className: if item.id == @props.highlightId then 'highlight'
-        onClick: (event) ~>
-          event.preventDefault!
-          @props.onItemClick event, item.id
-        item.caption
-      ul do
-        style: if not item.items?.length > 0 then {'display': 'none'} else {}
-        [build childItem for childItem in item.items] if item.items?
+    build = (item,i) ~>
+      * * li do
+            key: i
+            className: if item.id == @props.highlightId then 'highlight'
+            onClick: (event) ~>
+              event.preventDefault!
+              console.log item.id
+              @props.onItemClick event, item.id
+            item.caption
+        * if item.items?.length > 0
+            ul {key:i+'_ul'}, [build childItem,i for childItem,i in item.items]
+          else
+            ul {key:i+'_ul',style:{'display': 'none'}}
 
     nav do
       {}
       ul do
         {}
-        [build childItem for childItem in @props.items]
+        if @props.items? then [build childItem,i for childItem,i in @props.items]
 
   statics:
     extractItemsFrom: (mingledItems) ->
@@ -107,7 +86,6 @@ AdabruArticle = React.createClass do
         @refs.scroll.scrollTop += event.deltaY
     # scroll to element defined in window.location.hash, after waiting a bit for document loading
     if window.location.hash then setTimeout (~> @scrollTo window.location.hash.slice 1), 200
-
   componentWillReceiveProps: (nextProps) ->
     if nextProps.scrollToCommand.time > @props.scrollToCommand.time
       @scrollTo nextProps.scrollToCommand.id
@@ -124,16 +102,18 @@ AdabruArticle = React.createClass do
       onScroll: (event) ~>
         if event.target == @refs.scroll
           if @props.onScrolled?
-            scrolledToItem = @props.items.find (item) ~> ReactDOM.findDOMNode(@refs[item.props.id]).getBoundingClientRect().top >= 0
+            scrolledToItem = @props.items.find (item) ~> @refs[item.props.id].getBoundingClientRect().top >= 0
             @props.onScrolled scrolledToItem.props.id
           @setState {scrollTop: event.target.scrollTop}
       @props.items.map (item) ~>
-        React.cloneElement(item, {key: item.props.id, ref: item.props.id, scrollToMe: ~> @scrollTo item.props.id})
+        props = {key: item.props.id, ref: item.props.id}
+        if not typeof item.type is 'string' then props.scrollToMe = ~> @scrollTo item.props.id
+        React.cloneElement item, props
   scrollTo: (id) ->
     if @refs[id]?
-      @animate {scrollTop: @refs.scroll.scrollTop + ReactDOM.findDOMNode(@refs[id]).getBoundingClientRect().top}, 1000
+      @animate {scrollTop: @refs.scroll.scrollTop + @refs[id].getBoundingClientRect().top}, 500
     else
-      console.warn 'There is no ref to a top-level element with id: "'+id+'"!'
+      console.warn 'There is no ref to a top-level element with id: "'+id+'"! So no scrolling to it'
 
 Object.assign exports ? this,
   AdabruTableofcontents: AdabruTableofcontents
