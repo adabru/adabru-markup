@@ -127,7 +127,7 @@ adabru_v1_parser = new
     _local = (...s) -> stack[*-1][3] = s
     new Promise (fulfill, reject) ->
       parse_loop = ->
-        while i++ < 100000
+        while i++ < 50000
           if stack[0] instanceof Ast then return fulfill stack[0]
           if stack[*-1] instanceof Ast then ast = stack.pop! else ast = void
           if stack[*-1] instanceof Promise
@@ -218,7 +218,7 @@ decorate_parser = (parser, {
 
 export parse = (x, grammar, options={}) ->
   (fulfill, reject) <- new Promise _
-  options := {memory:{},startNT:Object.keys(grammar)[0]} `Object.assign` options
+  options := {memory:{},startNT:Object.keys(grammar)[0],stack:[]} `Object.assign` options
 
   # clone grammar for further processing
   grammar := JSON.parse JSON.stringify grammar
@@ -299,7 +299,8 @@ export parse = (x, grammar, options={}) ->
   node = grammar._start
 
   # technical parsing
-  ast <- parser.parse(x, [[node.func, 0, node.params, []]]).then _
+  options.stack.push [node.func, 0, node.params, []]
+  ast <- parser.parse(x, options.stack).then _
   if ast.end != x.length then ast.status = 'fail'
   if ast.status == 'fail' then return fulfill ast
 

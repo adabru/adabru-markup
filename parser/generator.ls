@@ -229,7 +229,17 @@ promise = switch argv.i
         if suggestion? then log "did you mean '#{colors.bold suggestion}'?"
 promise?.then (s) ->
   memory = {name:'interpreter_memory'}
-  ast <- abpv1.parse(s, grammar, if argv.nt? then {startNT:argv.nt,memory:memory} else {memory:memory}).then _
+  stack = []
+  process.stdin.setEncoding 'utf8'
+  process.stdin.setRawMode true
+  process.stdin.on 'data', (d) ->
+    switch d
+      case '\u0003'
+        print stack[*-3],1
+        print stack[*-2],1
+        print stack[*-1],1
+        setTimeout process.exit, 1000
+  ast <- abpv1.parse(s, grammar, if argv.nt? then {startNT:argv.nt,memory,stack} else {memory,stack}).then _
   if ast.status == 'fail'
     inspect_parse ast, memory[util.hash s], s
   else

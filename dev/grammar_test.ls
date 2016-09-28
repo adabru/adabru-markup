@@ -7,9 +7,6 @@ require! [fs,child_process]
 log = console.log
 args = process.argv.slice 2
 
-process.on('SIGINT',
-  (a) -> console.log 'asd'; process.exit!)
-
 # compile files
 for f in fs.readdirSync('./parser').filter((x)->x is /\.ls$/)
   f = "./parser/"+(f is /(.*)\.ls/)[1]
