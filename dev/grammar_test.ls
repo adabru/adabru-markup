@@ -26,13 +26,15 @@ child_process.execSync "node ./parser/generator.js ./grammar/ab_markup.grammar -
 abpv1 = require '../parser/abpv1.js'
 grammar = require '../html/js/build/ab_markup_grammar.json'
 input = fs.readFileSync file, {encoding: 'utf8'}
-ast <- abpv1.parse(input,grammar).then _
-parse_result = JSON.stringify ast
 
 # after parse
 switch args.0
   case '--create-oracle'
+    ast <- abpv1.parse(input,grammar).then _
+    parse_result = JSON.stringify ast
     fs.writeFileSync './dev/grammar_test.oracle', parse_result
   case '--verify'
+    ast <- abpv1.parse(input,grammar).then _
+    parse_result = JSON.stringify ast
     oracle = fs.readFileSync './dev/grammar_test.oracle', {encoding: 'utf8'}
     log if oracle is JSON.stringify abpv1.parse input,grammar then 'Everything as oracle says' else 'Attention, does not match with oracle'

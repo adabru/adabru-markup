@@ -12,7 +12,7 @@ util.hash = (s) ->
   hash
 util.flatten = (arr) -> [].concat.apply [], arr
 
-class Ast
+export class Ast
   (@name, @start, @end=start, @lookAhead=start, @status, @children=[]) ->
 
 adabru_v1_parser = new
@@ -127,7 +127,8 @@ adabru_v1_parser = new
     _local = (...s) -> stack[*-1][3] = s
     new Promise (fulfill, reject) ->
       parse_loop = ->
-        while i++ < 50000
+        while i++ < 20000
+          if i%100 == 0 then print stack.length,1
           if stack[0] instanceof Ast then return fulfill stack[0]
           if stack[*-1] instanceof Ast then ast = stack.pop! else ast = void
           if stack[*-1] instanceof Promise
