@@ -121,16 +121,26 @@ adabru_v1_parser = new
     if not c_ast? then _call child.func, pos, ...child.params
     else then return new Ast '_VOID', pos, c_ast.end, c_ast.lookAhead, c_ast.status, [c_ast]
 
+  i = 0
   @parse = (x, stack) ~>
     _call = (func, pos, ...params) !-> stack.push [func,pos,params,[]]
-    _return = (ast) ->
     _local = (...s) -> stack[*-1][3] = s
-    loop
-      if stack[0] instanceof Ast then return stack[0]
-      if stack[*-1] instanceof Ast then ast = stack.pop!
-      last = stack[*-1]
-      ast = last.0 x, last.1, ...last.2, [_call,ast,_local], ...last.3
-      if ast? then stack[*-1] = ast
+    new Promise (fulfill, reject) ->
+      parse_loop = ->
+        while i++ < 100000
+          if stack[0] instanceof Ast then return fulfill stack[0]
+          if stack[*-1] instanceof Ast then ast = stack.pop! else ast = void
+          if stack[*-1] instanceof Promise
+            stack[*-1].then (ast) ->
+              stack[*-1] = ast
+              parse_loop!
+            return
+          last = stack[*-1]
+          res = last.0 x, last.1, ...last.2, [_call,ast,_local], ...last.3
+          if res? then stack[*-1] = res
+        i := 0
+        setTimeout parse_loop
+      parse_loop!
 
 
 bind_grammar = (grammar, impl) ->
@@ -194,18 +204,24 @@ decorate_parser = (parser, {
       _call children[0].func, pos, ...children[0].params
     else
       ast = new Ast '_PASS',pos,c_ast.end,c_ast.lookAhead,c_ast.status,[c_ast]
-      if c_ast.status == 'success'
-        ast.x_next = flatten x,ast
-        ast_next = parser.parse ast.x_next, [[children[1].func, 0, children[1].params, []]]
-        ast.children = [ ast_next ]
-        ast{status} = ast_next
-      return ast
+      return switch c_ast.status
+        case 'fail' then ast
+        case 'success'
+          (fullfill, reject) <- new Promise _
+          ast := ast
+          ast.x_next = flatten x,ast
+          ast_next <- parser.parse(ast.x_next, [[children[1].func, 0, children[1].params, []]]).then _
+          ast.children = [ ast_next ]
+          ast{status} = ast_next
+          fullfill ast
   parser
 
 export parse = (x, grammar, options={}) ->
-  options = {memory:{},startNT:Object.keys(grammar)[0]} `Object.assign` options
+  (fulfill, reject) <- new Promise _
+  options := {memory:{},startNT:Object.keys(grammar)[0]} `Object.assign` options
+
   # clone grammar for further processing
-  grammar = JSON.parse JSON.stringify grammar
+  grammar := JSON.parse JSON.stringify grammar
 
   # optimization: retrieve first letter ranges of NTs
   min = 0x0000
@@ -283,9 +299,9 @@ export parse = (x, grammar, options={}) ->
   node = grammar._start
 
   # technical parsing
-  ast = parser.parse x, [[node.func, 0, node.params, []]]
+  ast <- parser.parse(x, [[node.func, 0, node.params, []]]).then _
   if ast.end != x.length then ast.status = 'fail'
-  if ast.status == 'fail' then return ast
+  if ast.status == 'fail' then return fulfill ast
 
   # postprocess ast, result is of form {name:'S', children:['adf', {name:'A', children:…}, '[a-z]']}
   pruned = (x, ast) -->
@@ -312,4 +328,4 @@ export parse = (x, grammar, options={}) ->
         else
           * name: ast.name
             children: pruned x, ast.children[0]
-  pruned x,ast
+  fulfill pruned x,ast

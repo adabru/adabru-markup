@@ -65,6 +65,46 @@ check_file = (file_path, isok=->true, isempty=->false, iswrong=->false) ->
           if a[1] < dist then a else [f,dist]
       ,['',999]
       if suggestion[1] <= base.length/2 then iswrong suggestion[0] else iswrong!
+inspect_parse = (ast, memory, x) ->
+  {f,inv,bold} = colors
+  line_lengths = (x.split '\n').map (s)->s.length
+  line_and_col = (pos) ->
+    for len,i in line_lengths
+      if pos < len then return [i,pos] else pos -= len+1
+  todo 'better suggestions here than just going through the buffer, e.g. some statistically trained suggestions'
+  log '<number>+<Enter> move to character OR <Enter> leave'
+  short_print = (ast, indent=0) ->
+    s = ' '.repeat indent
+    s += "#{}#{ast.name} #{if ast.status == 'success' then '✔' else '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} "
+    t = x.substring ast.start, ast.end
+    t = if t.length < 60 then "#{f.2 t}" else "#{f.2 t.substr 0,25}…#{f.2 t.substr -25,25}"
+    s += t.replace /\n/g, inv 'n'
+    s += ""
+    t = x.substring ast.end, ast.lookAhead
+    t = if t.length < 20 then "#{f.3 t}" else "#{f.3 t.substr 0,8}…#{f.3 t.substr -8,8}"
+    s += t.replace /\n/g, inv 'n'
+    log s
+    if ast.status == 'fail' then for c in ast.children
+      short_print c, indent+1
+  state = {pos: 1}
+  process.stdin.setEncoding 'utf8'
+  process.stdin.setRawMode true
+  process.stdin.on 'data', (d) ->
+    i = state.pos
+    switch d
+      case '\u0003' then process.exit!
+      case '\u001b[D' then state.pos--
+      case '\u001b[C' then state.pos++
+      case '0','1','2','3','4','5','6','7','8','9' then state.pos = (state.pos+d) .|. 0
+      case '\u007f'
+        s = ''+state.pos
+        state.pos = if s.length<=1 then 0 else 0 .|. s.substr 0, s.length-1
+      case '\r' then process.stdin.pause!
+    state.pos = (state.pos >? 0) <? x.length-1
+    if i != state.pos
+      let [l,c] = line_and_col state.pos
+        log "#{bold state.pos}: line #{bold l}, col #{bold c} #{f.2 x.slice state.pos-4>?0, state.pos}#{f.2 bold x.substr state.pos, 1}#{f.2 x.substr state.pos+1, 4}".replace /\n/g, inv 'n'
+      if memory[state.pos]? then for nt of memory[state.pos] then short_print memory[state.pos][nt]
 help = ->
   console.log '''
 
@@ -114,47 +154,8 @@ else
   abpv1_grammar = require './abpv1.json'
   abpv1 = require './abpv1.js'
   memory = {name: 'memory'}
-  inspect_parse = (ast, memory, x) ->
-    {f,inv,bold} = colors
-    line_lengths = (x.split '\n').map (s)->s.length
-    line_and_col = (pos) ->
-      for len,i in line_lengths
-        if pos < len then return [i,pos] else pos -= len+1
-    todo 'better suggestions here than just going through the buffer, e.g. some statistically trained suggestions'
-    log '<number>+<Enter> move to character OR <Enter> leave'
-    short_print = (ast, indent=0) ->
-      s = ' '.repeat indent
-      s += "#{}#{ast.name} #{if ast.status == 'success' then '✔' else '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} "
-      t = x.substring ast.start, ast.end
-      t = if t.length < 60 then "#{f.2 t}" else "#{f.2 t.substr 0,25}…#{f.2 t.substr -25,25}"
-      s += t.replace /\n/g, inv 'n'
-      s += ""
-      t = x.substring ast.end, ast.lookAhead
-      t = if t.length < 20 then "#{f.3 t}" else "#{f.3 t.substr 0,8}…#{f.3 t.substr -8,8}"
-      s += t.replace /\n/g, inv 'n'
-      log s
-      if ast.status == 'fail' then for c in ast.children
-        short_print c, indent+1
-    state = {pos: 1}
-    process.stdin.setEncoding 'utf8'
-    process.stdin.setRawMode true
-    process.stdin.on 'data', (d) ->
-      i = state.pos
-      switch d
-        case '\u0003' then process.exit!
-        case '\u001b[D' then state.pos--
-        case '\u001b[C' then state.pos++
-        case '0','1','2','3','4','5','6','7','8','9' then state.pos = (state.pos+d) .|. 0
-        case '\u007f'
-          s = ''+state.pos
-          state.pos = if s.length<=1 then 0 else 0 .|. s.substr 0, s.length-1
-        case '\r' then process.stdin.pause!
-      state.pos = (state.pos >? 0) <? x.length-1
-      if i != state.pos
-        let [l,c] = line_and_col state.pos
-          log "#{bold state.pos}: line #{bold l}, col #{bold c} #{f.2 x.slice state.pos-4>?0, state.pos}#{f.2 bold x.substr state.pos, 1}#{f.2 x.substr state.pos+1, 4}".replace /\n/g, inv 'n'
-        if memory[state.pos]? then for nt of memory[state.pos] then short_print memory[state.pos][nt]
-  ast = abpv1.parse input, abpv1_grammar, {memory:memory}
+
+  ast <- abpv1.parse(input, abpv1_grammar, {memory:memory}).then _
   if ast.status == 'fail'
     error 'failed to parse grammar.'
     if not argv.d? then
@@ -227,8 +228,8 @@ promise = switch argv.i
         error "input file '#{argv.i}' does not exist"
         if suggestion? then log "did you mean '#{colors.bold suggestion}'?"
 promise?.then (s) ->
-  memory = {}
-  ast = abpv1.parse s, grammar, if argv.nt? then {startNT:argv.nt,memory:memory} else {memory:memory}
+  memory = {name:'interpreter_memory'}
+  ast <- abpv1.parse(s, grammar, if argv.nt? then {startNT:argv.nt,memory:memory} else {memory:memory}).then _
   if ast.status == 'fail'
     inspect_parse ast, memory[util.hash s], s
   else
