@@ -16,16 +16,36 @@ abpv1 = require '../parser/abpv1.js'
 grammar = require '../html/js/build/ab_markup_grammar.json'
 document = fs.readFileSync (process.argv[2] ? './dev/benchmark_test.data'), 'utf8'
 
-start = new Date!
+_ =
+  'q' : (a,i) -->
+    b = a.slice!.sort((s,t) -> (s.|.0) > (t.|.0))[Math.round (i/4) * (a.length-1)]
+  '∑' : (a) -> a.reduce (a,x) -> a+x
+  'μ' : (a) -> (1 / a.length) * _'∑' a
+
+boxplot = (a) ->
+  let q = _'q'(a)
+    i = [q(0), q(1), q(2), q(3), q(4)]
+    μ = _'μ' a
+    [...x,μx] = [...i,μ].map (ii) -> Math.round( (ii - i.0) / (i.4 - i.0) * 40 )
+    s = ' '.repeat(μx) + '•' + Math.round μ
+    s += ' '.repeat 40 - s.length
+    res = i.0+'|'
+    for c from 0 to s.length-1 then res += switch
+      case c < x.1 then s[c]
+      case c < x.2 then '\u001b[40m' + s[c] + '\u001b[49m'
+      case c == x.2 then '\u001b[100m' + s[c] + '\u001b[49m'
+      case c <= x.3 then '\u001b[40m' + s[c] + '\u001b[49m'
+      default then s[c]
+    res += '|'+i.4
+
+times = []
 pass = (i) ->
   if i<=10
     console.log 'Pass '+i+' of 10...'
     time1 = new Date!
     ast <- abpv1.parse(document,grammar).then _
     time2 = new Date!
-    console.log '                 '+(time2 - time1)+' / '+Math.round (time2 - start)/i
+    times.push time2 - time1
+    console.log '                       '+boxplot times
     pass i+1
-  else
-    end = new Date!
-    console.log 'Parsing time: ', end - start
 pass 1
