@@ -16,7 +16,7 @@ export class Ast
   (@name, @start, @end=start, @lookAhead=start, @status, @children=[]) ->
 
 adabru_v1_parser = new
-  @terminal = function T(x, pos, c)
+  @terminal = function T({x}, pos, c)
     ast = new Ast '_T', pos
     pass = switch
       case util.isString c
@@ -38,7 +38,7 @@ adabru_v1_parser = new
     return ast
 
   @nonterminal = !function NT(x, pos, sym, child, [_call,c_ast])
-    if not c_ast? then _call child.func, pos, ...child.params
+    if not c_ast? then _call child.func, x, pos, ...child.params
     else
       ast = (new Ast sym) `Object.assign` c_ast{status, start, end, lookAhead}
       if c_ast.status == 'success' then ast.children = [c_ast]
@@ -46,7 +46,7 @@ adabru_v1_parser = new
 
   @alternative = !function ALT(x, pos, children, [_call,c_ast,_local], i=0, ast=new Ast '_ALT', pos)
     if not c_ast?
-      _call children[i].func, pos, ...children[i].params
+      _call children[i].func, x, pos, ...children[i].params
     else
       ast.lookAhead >?= c_ast.lookAhead
       switch c_ast.status
@@ -63,7 +63,7 @@ adabru_v1_parser = new
 
   @sequence = !function SEQ(x, pos, children, [_call,c_ast,_local], ast=new Ast '_SEQ',pos)
     if not c_ast?
-      _call children[ast.children.length].func, ast.end, ...children[ast.children.length].params
+      _call children[ast.children.length].func, x, ast.end, ...children[ast.children.length].params
     else
       ast.lookAhead >?= c_ast.lookAhead
       switch c_ast.status
@@ -79,7 +79,7 @@ adabru_v1_parser = new
           return ast
 
   @optional = !function OPT(x, pos, child, [_call, c_ast])
-    if not c_ast? then _call child.func, pos, ...child.params
+    if not c_ast? then _call child.func, x, pos, ...child.params
     else
       ast = new Ast '_OPT', pos, pos, c_ast.lookAhead, 'success'
       if c_ast.status == 'success'
@@ -88,7 +88,7 @@ adabru_v1_parser = new
       return ast
 
   @star = !function STAR(x, pos, child, [_call, c_ast, _local], ast=new Ast '_STAR',pos,,,'success')
-    if not c_ast? then _call child.func, pos, ...child.params
+    if not c_ast? then _call child.func, x, pos, ...child.params
     else
       ast{lookAhead} = c_ast
       switch c_ast.status
@@ -96,12 +96,12 @@ adabru_v1_parser = new
           ast{end} = c_ast
           ast.children ++= c_ast
           _local ast
-          _call child.func, ast.end, ...child.params
+          _call child.func, x, ast.end, ...child.params
         case 'fail'
           return ast
 
   @plus = ~!function PLUS(x, pos, child, [_call, c_ast])
-    if not c_ast? then _call @star, pos, child
+    if not c_ast? then _call @star, x, pos, child
     else
       c_ast.name = '_PLUS'
       if c_ast.status == 'success' and c_ast.children.length == 0
@@ -110,34 +110,50 @@ adabru_v1_parser = new
       return c_ast
 
   @and = !function AND(x, pos, child, [_call, c_ast])
-    if not c_ast? then _call child.func, pos, ...child.params
+    if not c_ast? then _call child.func, x, pos, ...child.params
     else then return new Ast '_AND', pos, pos, c_ast.lookAhead, c_ast.status, [c_ast]
 
   @not = !function NOT(x, pos, child, [_call, c_ast])
-    if not c_ast? then _call child.func, pos, ...child.params
+    if not c_ast? then _call child.func, x, pos, ...child.params
     else return new Ast '_NOT', pos, pos, c_ast.lookAhead, {'fail':'success', 'success':'fail'}[c_ast.status], [c_ast]
 
   @void = !function VOID(x, pos, child, [_call, c_ast])
-    if not c_ast? then _call child.func, pos, ...child.params
+    if not c_ast? then _call child.func, x, pos, ...child.params
     else then return new Ast '_VOID', pos, c_ast.end, c_ast.lookAhead, c_ast.status, [c_ast]
 
+  @multipass = !function PASS({x,x_hash}, pos, children, [_call,c_ast,_local], first_ast)
+    switch
+      case not c_ast?
+        _call children[0].func, {x,x_hash}, pos, ...children[0].params
+      case not first_ast? and c_ast.status == 'fail'
+        return new Ast '_PASS',pos,c_ast.end,c_ast.lookAhead,c_ast.status,[c_ast]
+      case not first_ast? and c_ast.status == 'success'
+        flatten = (x, ast) -->
+          switch ast.name
+            case '_T' then x.substring ast.start, ast.end
+            case '_VOID' then ''
+            default then (ast.children.map flatten x).join ''
+        _local first_ast = new Ast '_PASS',pos,c_ast.end,c_ast.lookAhead,c_ast.status,[c_ast]
+        first_ast.x = flatten x,c_ast
+        first_ast.x_hash = x_hash+",#{pos},#{c_ast.end}:"+util.hash first_ast.x
+        _call children[1].func, {first_ast.x,first_ast.x_hash}, 0, ...children[1].params
+      case first_ast? and c_ast?
+        first_ast
+          ..children = [c_ast]
+          ..status = c_ast.status
+        return first_ast
+
   i = 0
-  @parse = (x, stack) ~>
-    _call = (func, pos, ...params) !-> stack.push [func,pos,params,[]]
-    _local = (...s) -> stack[*-1][3] = s
+  @parse = (stack) ~>
+    _call = (func, {x,x_hash}, pos, ...params) !-> stack.push [func,  {x,x_hash}, pos, params, []]
+    _local = (...s) -> stack[*-1][4] = s
     new Promise (fulfill, reject) ->
       parse_loop = ->
-        while i++ < 20000
-          if i%100 == 0 then print stack.length,1
+        while i++ < 10000
           if stack[0] instanceof Ast then return fulfill stack[0]
           if stack[*-1] instanceof Ast then ast = stack.pop! else ast = void
-          if stack[*-1] instanceof Promise
-            stack[*-1].then (ast) ->
-              stack[*-1] = ast
-              parse_loop!
-            return
           last = stack[*-1]
-          res = last.0 x, last.1, ...last.2, [_call,ast,_local], ...last.3
+          res = last.0 last.1, last.2, ...last.3, [_call,ast,_local], ...last.4
           if res? then stack[*-1] = res
         i := 0
         setTimeout parse_loop
@@ -170,51 +186,25 @@ decorate_parser = (parser, {
   first_letter_map=null
 }={}) ->
   # packrat parser + multipass
-  parser._terminal ?= parser.terminal
   parser._nonterminal ?= parser.nonterminal
-  parser._parse ?= parser.parse
-  parser.parse = (x, stack) ->
-    parser._parse {x:x, x_hash:util.hash x}, stack
-  parser.terminal = function PACKRAT_T({x}, pos, c)
-    parser._terminal x, pos, c
   parser.nonterminal = parser._nonterminal
   let nt = parser.nonterminal
-    if first_letter_map? then parser.nonterminal = !function FIRST_LETTER_NT({x}, pos, sym, child, [_call,c_ast])
+    if first_letter_map? then parser.nonterminal = !function FIRST_LETTER_NT({x,x_hash}, pos, sym, child, [_call,c_ast])
       switch
         case c_ast?
           return c_ast
         case not first_letter_map[sym].some ((interval) -> interval[0] <= x.charCodeAt(pos) <= interval[1])
           return new Ast sym,pos,pos,pos+1,'fail'
         default
-          _call nt, pos, sym, child
+          _call nt, {x,x_hash}, pos, sym, child
   let nt = parser.nonterminal
     parser.nonterminal = !function PACKRAT_NT({x,x_hash}, pos, sym, child, [_call,c_ast])
-      memory[x_hash] ?= {}
+      memory[x_hash] ?= {x}
       memory[x_hash][pos] ?= {}
       switch
         case memory[x_hash][pos][sym]? then return memory[x_hash][pos][sym]
         case c_ast? then return memory[x_hash][pos][sym]=c_ast
-        default then _call nt, pos, sym, child
-  flatten = (x, ast) -->
-    switch ast.name
-      case '_T' then x.substring ast.start, ast.end
-      case '_VOID' then ''
-      default then (ast.children.map flatten x).join ''
-  parser.multipass = !function PASS({x}, pos, children, [_call,c_ast,_local], i=0, ast)
-    if not c_ast?
-      _call children[0].func, pos, ...children[0].params
-    else
-      ast = new Ast '_PASS',pos,c_ast.end,c_ast.lookAhead,c_ast.status,[c_ast]
-      return switch c_ast.status
-        case 'fail' then ast
-        case 'success'
-          (fullfill, reject) <- new Promise _
-          ast := ast
-          ast.x_next = flatten x,ast
-          ast_next <- parser.parse(ast.x_next, [[children[1].func, 0, children[1].params, []]]).then _
-          ast.children = [ ast_next ]
-          ast{status} = ast_next
-          fullfill ast
+        default then _call nt, {x,x_hash}, pos, sym, child
   parser
 
 export parse = (x, grammar, options={}) ->
@@ -300,11 +290,10 @@ export parse = (x, grammar, options={}) ->
   node = grammar._start
 
   # technical parsing
-  options.stack.push [node.func, 0, node.params, []]
-  ast <- parser.parse(x, options.stack).then _
+  options.stack.push [node.func, {x,x_hash:util.hash(x)}, 0, node.params, []]
+  ast <- parser.parse(options.stack).then _
   if ast.end != x.length then ast.status = 'fail'
   if ast.status == 'fail' then return fulfill ast
-
   # postprocess ast, result is of form {name:'S', children:['adf', {name:'A', children:…}, '[a-z]']}
   pruned = (x, ast) -->
     switch ast.name
@@ -323,11 +312,11 @@ export parse = (x, grammar, options={}) ->
               res ++= element
         res
       case '_PASS'
-        pruned ast.x_next, ast.children[0]
+        pruned ast.x, ast.children[0]
       default # nonterminal
         if grammar[ast.name].flags?.pruned
           pruned x, ast.children[0]
         else
           * name: ast.name
             children: pruned x, ast.children[0]
-  fulfill pruned x,ast
+  return fulfill pruned x,ast

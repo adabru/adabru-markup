@@ -24,23 +24,21 @@ colors = (->
   {f,b,inv,pos,bold,dim,reset})!
 error = (s) ->
   console.log '\u001b[1m\u001b[31m'+s+'\u001b[39m\u001b[0m'
-log = (s, newline=true) ->
-  if newline then console.log s else process.stdout.write s
+log = console.log
+write = (s) -> process.stdout.write s
 todo = (s) ->
   console.log '\u001b[33mTODO: '+s+'\u001b[39m'
 
 abpv1 = require './abpv1.js'
 
-export inspect_memory = (memory, x) ->
-  (fulfill, reject) <- new Promise _
+memory_screen = (memory, x, repaint) ->
+  x_hash = ''+util.hash x
   {f,inv,bold} = colors
   line_lengths = (x.split '\n').map (s)->s.length
   line_and_col = (pos) ->
     for len,i in line_lengths
       if pos < len then return [i,pos] else pos -= len+1
-  todo 'better suggestions here than just going through the buffer, e.g. some statistically trained suggestions'
-  log '<number>+<Enter> move to character OR <Enter> leave'
-  short_print = (ast, indent=0) ->
+  short_print = (ast, x, indent=0) ->
     s = ' '.repeat indent
     s += "#{}#{ast.name} #{if ast.status == 'success' then '✔' else '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} "
     t = x.substring ast.start, ast.end
@@ -52,70 +50,118 @@ export inspect_memory = (memory, x) ->
     s += t.replace /\n/g, inv 'n'
     log s
     if ast.status == 'fail' then for c in ast.children
-      short_print c, indent+1
-  state = {pos: 1}
-  process.stdin
-    ..setEncoding 'utf8'
-    ..setRawMode true
-    ..on 'data', callback=(d) ->
-      i = state.pos
-      switch d
-        case '\u0003' then process.stdin ; ..removeListener 'data',callback ; ..pause! ; fulfill!
-        case '\u001b[D' then state.pos--
-        case '\u001b[C' then state.pos++
-        case '0','1','2','3','4','5','6','7','8','9' then state.pos = (state.pos+d) .|. 0
-        case '\u007f'
-          s = ''+state.pos
-          state.pos = if s.length<=1 then 0 else 0 .|. s.substr 0, s.length-1
-        case '\r' then process.stdin.pause!
-      state.pos = (state.pos >? 0) <? x.length-1
-      if i != state.pos
-        let [l,c] = line_and_col state.pos
-          log "#{bold state.pos}: line #{bold l}, col #{bold c} #{f.2 x.slice state.pos-4>?0, state.pos}#{f.2 bold x.substr state.pos, 1}#{f.2 x.substr state.pos+1, 4}".replace /\n/g, inv 'n'
-        if memory[state.pos]? then for nt of memory[state.pos] then short_print memory[state.pos][nt]
+      short_print c, x, indent+1
+  state = {pos: {"#{x_hash}":1, '':0}, hash:x_hash}
+  onkey = (d) ->
+    i = j = state.pos[state.hash]
+    switch (state.hash.match(/([^:]+)/g) || []).length
+      case 0
+        hashes = Object.keys(memory).filter((k)->k.startsWith x_hash)
+        switch d
+          case '\u001b[B' then state.hash = hashes[j] ; return onkey ''
+          case '\u001b[C' then j++
+          case '\u001b[D' then j--
+        j = (j >? 0) <? hashes.length-1
+        if d == '' or i != j
+          state.pos[state.hash] = j
+          repaint!
+      default
+        switch d
+          case '\u001b[A'
+            matches = state.hash.match /^(.+),[^,:]+,[^,:]+:[^:]+$|()/
+            state.hash = matches[1] || matches[2] ; print state.hash ; return onkey ''
+          case '\u001b[B' then log 'down'
+          case '\u001b[C' then j++
+          case '\u001b[D' then j--
+          case '0','1','2','3','4','5','6','7','8','9' then j = (j+d) .|. 0
+          case '\u007f'
+            s = ''+j
+            j = if s.length<=1 then 0 else 0 .|. s.substr 0, s.length-1
+        x = memory[state.hash].x
+        j = (j >? 0) <? x.length-1
+        if d == '' or i != j
+          state.pos[state.hash] = j
+          repaint!
+  paint = ->
+    key = colors.bold
+    log "#{key '0-9 ← → BS'} move to character #{key 'Ctrl-C'} leave\n"
+    if (state.hash.match(/([^:]+)/g) || []).length is 0
+      let j = state.pos[state.hash]
+        hashes = Object.keys(memory).filter((k)->k.startsWith x_hash)
+        log hashes.map((k,i)->if i == j then bold k else k).join('\n')
+    else
+      let j = state.pos[state.hash] then let [l,c] = line_and_col j, x = memory[state.hash].x
+        log "#{bold j}: line #{bold l}, col #{bold c} #{f.2 x.slice j-4>?0, j}#{f.2 bold x.substr j, 1}#{f.2 x.substr j+1, 4}".replace /\n/g, inv 'n'
+        if memory[state.hash][j]? then for nt of memory[state.hash][j] then short_print memory[state.hash][j][nt], x
+  {onkey, paint}
 
+stack_screen = (stack) ->
+  paint: ->
+    print stack[*-3],1
+    print stack[*-2],1
+    print stack[*-1],1
+  onkey: (->)
 
-inspect_start = (x, memory, stack) ->
-  interval = setInterval ->
-    log 'stacksize: '+stack.length
-  ,1000
-  process.stdin
-    ..setEncoding 'utf8'
-    ..setRawMode true
-    ..on 'data', callback=(d) ->
-      switch d
-        case 's'
-          print stack[*-3],1
-          print stack[*-2],1
-          print stack[*-1],1
-        case 'm'
-          process.stdin.removeListener 'data', callback
-          clearInterval interval
-          <- inspect_memory(memory,x).then _
-          process.stdin
-            ..on 'data', callback
-            ..resume!
-        case 'c'
-          stack.unshift new abpv1.Ast 'INSPECTOR_STOP'
-          # print stack[0],1
-        case '\u0003'
-          process.stdin.removeListener 'data', callback
-          clearInterval interval
-          log '^C'
-          process.exit!
-
-inspect_end = ->
-  process.stdin.pause!
+inspect = (x, memory, stack, isRunning=false) ->
+  @status =
+    stacksize: 0
+    starttime: new Date!.getTime!
+  @screen =
+    paint: ->
+      todo 'better suggestions here than just going through the buffer, e.g. some statistically trained suggestions'
+    onkey: ->
+  @paint = (screen=true) ~>
+    let key = colors.bold
+      write '\u001b[0;0H\u001b[K' + "#{key 's'} stack #{key 'm'} memory #{if isRunning then "#{key 'c'} cancel parsing [stack #{stack.length}]" else ""}"
+      if screen
+        process.stdout.write '\u001b[2;0H\u001b[J'
+        @screen.paint!
+  @start = ~>
+    # write '\u001b[?47h'
+    (fulfill) <~ new Promise _
+    if isRunning then @interval = setInterval (~> @paint false), 1000
+    process.stdin
+      ..setEncoding 'utf8'
+      ..setRawMode true
+      ..resume!
+      ..on 'data', @callback=(d) ~>
+        switch d
+          case 's'
+            @screen = stack_screen stack, @paint
+            @paint!
+          case 'm'
+            @screen = memory_screen memory, x, @paint
+            @paint!
+          case 'c'
+            if isRunning
+              stop = new abpv1.Ast 'INSPECTOR_STOP'
+              stop.status = 'fail'
+              stack.unshift stop
+              log 'parsing was canceled.'
+          case '\u0003'
+            process.stdin.removeListener 'data', @callback
+            clearInterval @interval
+            log '^C'
+            process.exit!
+          default @screen.onkey d
+    @paint!
+  @end = ~>
+    if @interval? then clearInterval @interval
+    process.stdin.removeListener 'data', @callback
+    # write '\u001b[?47l'
+    process.stdin.pause!
+  @
 
 export debug_parse = (x, grammar, parser_options={}) ->
   (fulfill) <- new Promise _
   memory = {name:'inspector_memory'}
   stack = []
     ..name = 'inspector_stack'
-  inspect_start x, memory, stack
+  inspect_inst = new inspect x, memory, stack, true
+  inspect_inst.start!
   ast <- abpv1.parse(x, grammar, Object.assign parser_options, {memory,stack}).then _
-  inspect_end!
-  inspect_post x, memory, ast
+  inspect_inst.end!
+  inspect_post x, memory, stack, ast
     ..then fulfill
 
 print_pruned_ast = (ast) ->
@@ -134,11 +180,10 @@ print_pruned_ast = (ast) ->
       s
   log short_print '',ast
 
-inspect_post = (x, memory, ast) ->
-  (fulfill) <- new Promise
+inspect_post = (x, memory, stack, ast) ->
+  (fulfill) <- new Promise _
   if ast.status == 'fail'
-    inspect_memory memory[util.hash s], s
-      ..then fulfill
+    new inspect(x, memory, stack).start! # startAt:'memory'
   else
     print_pruned_ast ast
-    fulfill!
+    fulfill ast
