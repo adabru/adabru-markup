@@ -79,6 +79,11 @@ help = ->
       -c <file>   write compiled parser to <file>, if <file>
                   is not given, it is written to stdout
       --help
+
+  \u001b[1mExamples\u001b[0m
+  echo "i == 5" | abpv1 bash.grammar -i --nt EXPRESSION
+  abpv1 regex.grammar -c > jo.json
+
   '''
 
 # show help
@@ -89,13 +94,14 @@ if argv.help
 
 # check grammar newer than generated parser
 grammar_up_to_date = check_file argv.c and check_file argv._[0] and (fs.statSync argv._[0]).mtime.getTime! < (fs.statSync argv.c).mtime.getTime!
-grammar = {}
 inspector = require './inspector.js'
-if grammar_up_to_date
+grammar_get = if grammar_up_to_date
+  (fulfill) <- new Promise _
   log 'The generated parser is newer than the grammar definition.'
-  grammar := JSON.parse fs.readFileSync argv.c, {encoding: 'utf8'}
   abpv1 = require './abpv1.js'
+  fulfill JSON.parse fs.readFileSync argv.c, {encoding: 'utf8'}
 else
+  (fulfill) <- new Promise _
   # read grammar file
   valid = check_file argv._[0],
     ->
@@ -117,11 +123,11 @@ else
   abpv1 = require './abpv1.js'
   memory = {name: 'memory'}
 
-  ast <- inspector.debug_parse(input, abpv1_grammar, {memory:memory}).then _
+  ast <- inspector.debug_parse(input, abpv1_grammar, {memory}, {-print_ast}).catch(log).then(_)
   if not ast? then return
 
   # build grammar from raw ast
-  grammar := {}
+  grammar = {}
   to_grammar = (ast) ->
     switch ast.name
       case 'PASS' then func: 'multipass', params:[ast.children.map to_grammar]
@@ -169,7 +175,10 @@ else
       fs.writeFileSync argv.c, JSON.stringify grammar
       log "written file '#{colors.bold that}'"
 
+  fulfill grammar
+
 # parse/interpret user specified input with fresh grammar
+(grammar) <- grammar_get.catch(log).then _
 promise = switch argv.i
   case true
     get_stdin!
@@ -183,5 +192,5 @@ promise = switch argv.i
       (suggestion) !->
         error "input file '#{argv.i}' does not exist"
         if suggestion? then log "did you mean '#{colors.bold suggestion}'?"
-s <- promise?.then _
-inspector.debug_parse s, grammar, if argv.nt? then {startNT:argv.nt}
+s <- promise?.catch(log).then _
+ast <- inspector.debug_parse(s, grammar, (if argv.nt? then {startNT:argv.nt}), {+print_ast}).catch(log).then _

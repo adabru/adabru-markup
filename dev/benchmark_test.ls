@@ -18,7 +18,7 @@ document = fs.readFileSync (process.argv[2] ? './dev/benchmark_test.data'), 'utf
 
 _ =
   'q' : (a,i) -->
-    b = a.slice!.sort((s,t) -> (s.|.0) > (t.|.0))[Math.round (i/4) * (a.length-1)]
+    b = a.slice!.sort((s,t) -> +s > +t)[Math.round (i/4) * (a.length-1)]
   '∑' : (a) -> a.reduce (a,x) -> a+x
   'μ' : (a) -> (1 / a.length) * _'∑' a
 
