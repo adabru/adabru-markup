@@ -144,12 +144,12 @@ adabru_v1_parser = new
         return first_ast
 
   i = 0
-  @parse = (stack) ~>
+  @parse = (stack, blocking_rate) ~>
     _call = (func, {x,x_hash}, pos, ...params) !-> stack.push [func,  {x,x_hash}, pos, params, []]
     _local = (...s) -> stack[*-1][4] = s
     new Promise (fulfill, reject) ->
       parse_loop = ->
-        while i++ < 10000
+        while i++ < blocking_rate
           if stack[0] instanceof Ast then return fulfill stack[0]
           if stack[*-1] instanceof Ast then ast = stack.pop! else ast = void
           last = stack[*-1]
@@ -209,7 +209,7 @@ decorate_parser = (parser, {
 
 export parse = (x, grammar, options={}) ->
   (fulfill, reject) <- new Promise _
-  options := {memory:{},startNT:Object.keys(grammar)[0],stack:[]} `Object.assign` options
+  options := {memory:{},startNT:Object.keys(grammar)[0],stack:[],blocking_rate:1e6} `Object.assign` options
 
   # clone grammar for further processing
   grammar := JSON.parse JSON.stringify grammar
@@ -291,7 +291,7 @@ export parse = (x, grammar, options={}) ->
 
   # technical parsing
   options.stack.push [node.func, {x,x_hash:util.hash(x)}, 0, node.params, []]
-  ast <- parser.parse(options.stack).then _
+  ast <- parser.parse(options.stack, options.blocking_rate).then _
   if ast.end != x.length then ast.status = 'fail' ; ast.error = 'did not capture whole input'
   if ast.status == 'fail' then return fulfill ast
   # postprocess ast, result is of form {name:'S', children:['adf', {name:'A', children:…}, '[a-z]']}

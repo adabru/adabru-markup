@@ -276,7 +276,7 @@ inspect = (x, memory, stack, {running=false,stack_trace=null}) ->
     if @status.started then write '\u001b[?47l\u001b8'
   @
 
-export debug_parse = (x, grammar, parser_options={}, {print_ast=true,stack_trace=false}={}) ->
+export debug_parse = (x, grammar, parser_options={}, {print_ast=true,stack_trace=false,small_block=true}={}) ->
   (fulfill) <- new Promise _
   memory = {name:'inspector_memory'}
   stack = []
@@ -285,6 +285,7 @@ export debug_parse = (x, grammar, parser_options={}, {print_ast=true,stack_trace
     stack_trace := []
     stack._pop = stack.pop ; stack.pop = -> x = stack._pop! ; stack_trace.push x ; x
     stack._push = stack.push ; stack.push = (...arg) -> stack_trace.push ...arg ; stack._push ...arg
+  if small_block then parser_options.blocking_rate ?= 1e4
   inspect_inst = new inspect x, memory, stack, {+running,stack_trace}
   inspect_inst.start!
   ast <- abpv1.parse(x, grammar, Object.assign parser_options, {memory,stack}).catch(log).then _
