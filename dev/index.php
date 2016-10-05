@@ -25,19 +25,21 @@ if(!$_SERVER["QUERY_STRING"]) {
       var start = new Date()
       var parsed
       if (mdfilepath.endsWith('.json')) {
-        parsed = JSON.parse(data)
+        parsed = new Promise((fulfill) => fulfill(JSON.parse(data)))
       } else {
         parsed = adabruMarkup.parseDocument(data)
       }
-      var end = new Date()
-      console.log('markup parsetime: ', end-start)
+      parsed.catch(console.log).then((parsed) => {
+        var end = new Date()
+        console.log('markup parsetime: ', end-start)
 
-      decorated = adabruMarkup.decorateTree(parsed)
+        decorated = adabruMarkup.decorateTree(parsed)
 
-      start = new Date()
-      var printed = adabruMarkup.printDocument(decorated, document.querySelector('#app'))
-      end = new Date()
-      console.log('dom parsetime + script execution: ', end-start)
+        start = new Date()
+        var printed = adabruMarkup.printDocument(decorated, document.querySelector('#app'))
+        end = new Date()
+        console.log('dom parsetime + script execution: ', end-start)
+      })
       // $('#big').html( markdown.toHTML(mdfile) )
     })
 

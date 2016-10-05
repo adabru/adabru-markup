@@ -66,6 +66,9 @@ Downloading zip from https://github.com/adabru/adabru-markup and extracting.
 - benchmarks
   └▪./dev/benchmark_test.js↵
 
+- React components in browser
+  in browser console: 'ReactDOM.render(React.createElement(AdabruArticle),document.querySelector("#app"))'
+
 ### Releasing
 
 └▪npm version [major | minor | patch | …]↵

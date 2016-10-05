@@ -37,4 +37,4 @@ switch args.0
     ast <- abpv1.parse(input,grammar).then _
     parse_result = JSON.stringify ast
     oracle = fs.readFileSync './dev/grammar_test.oracle', {encoding: 'utf8'}
-    log if oracle is JSON.stringify abpv1.parse input,grammar then 'Everything as oracle says' else 'Attention, does not match with oracle'
+    log if oracle is parse_result then 'Everything as oracle says' else 'Attention, does not match with oracle'

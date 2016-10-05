@@ -6,12 +6,6 @@ abpv1 = require '../../parser/abpv1.js'
 #
 #
 {span, nav, li, a, ol, ul, h1, h2, h3, p, div, br, strong, em, code, kbd, img, table, tbody, tr, th, td, iframe} = React.DOM
-if window? then Object.assign window, {
-  React: React
-  ReactDOM: ReactDOM
-  abpv1: abpv1
-  grammar: ab_markup_grammar
-}
 
 {AdabruTableofcontents, AdabruArticle} = require './toc.ls'
 {AdabruFiletree} = require './filetree.ls'
@@ -68,9 +62,10 @@ AdabruPage = React.createClass
 
 adabruMarkup =
   parseAndPrint: (document, domNode) ->
-    ast = @parseDocument document
-    @decorateTree ast
-    @printDocument ast, domNode
+    new Promise (fulfill) ->
+      @parseDocument document .catch(console.log).then (ast) ->
+        @decorateTree ast
+        fulfill @printDocument ast, domNode
 
   parseDocument: (document, startNT='Document') ->
     abpv1.parse document, ab_markup_grammar, {startNT:startNT}
@@ -251,3 +246,6 @@ Object.assign exports ? this, {
   printDocument: adabruMarkup.printDocument.bind(adabruMarkup)
   parseAndPrint: adabruMarkup.parseAndPrint.bind(adabruMarkup)
 }
+
+if window? then Object.assign window, {React, ReactDOM, abpv1, grammar: ab_markup_grammar
+  ,AdabruPage, AdabruTableofcontents, AdabruArticle, AdabruFiletree, AdabruCodeContainer, AdabruSlides}
