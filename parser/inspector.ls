@@ -40,7 +40,7 @@ memory_screen = (memory, x, repaint) ->
       if pos < len then return [i,pos] else pos -= len+1
   short_print = (ast, x, indent=0) ->
     s = ' '.repeat indent
-    s += "#{}#{ast.name} #{if ast.status == 'success' then '✔' else '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} "
+    s += "#{ast.name} #{if ast.status == 'success' then '✔' else '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} "
     t = x.substring ast.start, ast.end
     t = if t.length < 60 then "#{f.2 t}" else "#{f.2 t.substr 0,25}…#{f.2 t.substr -25,25}"
     s += t.replace /\n/g, inv 'n'
@@ -109,25 +109,111 @@ stack_screen = (stack) ->
     print stack[*-3],1
     print stack[*-2],1
     print stack[*-1],1
-  onkey: (->)
+  onkey: ->
 
-inspect = (x, memory, stack, isRunning=false) ->
+stack_trace_screen = (stack_trace, repaint) ->
+  {f,inv} = colors
+  state =
+    pos: 0
+    stack: []
+  operator_map =
+    'PACKRAT_NT':'🕮','FIRST_LETTER_NT':'🌔','T':'T','PASS':'↺','PLUS':'+','STAR':'*','SEQ':'─','OPT':'?','VOID':':','NOT':'!','AND':'&','ALT':'|','NT':''
+  paint = ->
+    symbols = state.stack.map ([f,x,pos,params,local]) -> if f.name is 'NT' then params.0 else operator_map[f.name]
+    last_symbol = symbols.pop!
+    o = stack_trace[state.pos]
+    s = "↘ "+symbols.join ' '
+    s += ' ' + switch
+      case not (o instanceof abpv1.Ast) then last_symbol
+      case o.status == 'fail' then f.1 last_symbol
+      case o.status == 'success' then f.2 last_symbol
+      default then '⚠'
+    s += '\n' + switch
+      case (ast=o) instanceof abpv1.Ast
+        u = "#{if ast.status == 'success' then f.2 '✔' else f.1 '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} "
+        t = state.stack[*-1].1.x.substring ast.start, ast.end
+        t = if t.length < 60 then "#{f.2 t}" else "#{f.2 t.substr 0,25}…#{f.2 t.substr -25,25}"
+        u += t.replace /\n/g, inv 'n'
+        u += ""
+        t = state.stack[*-1].1.x.substring ast.end, ast.lookAhead
+        t = if t.length < 20 then "#{f.3 t}" else "#{f.3 t.substr 0,8}…#{f.3 t.substr -8,8}"
+        u += t.replace /\n/g, inv 'n'
+      default
+        u = "↘ #{f.3 operator_map[o.0.name]}#{if o.0.name.endsWith 'NT' then f.3 o.3.0 else ''}"
+        print_ops = ({func:f,params:p},nt=false) ->
+          precedence = ['PLUS','STAR','OPT','VOID','NOT','AND','SEQ','ALT','PASS']
+          switch f.name
+            case 'NT', 'PACKRAT_NT', 'FIRST_LETTER_NT'
+              if nt then print_ops p.1 else p.0
+            case 'T' then (switch
+              case util.isString p.0 then "'#{p.0}'"
+              case util.isArray p.0
+                "[" + p.0.map((cc) ->
+                  switch
+                    case cc == '^' then cc
+                    case cc[0] == cc[1] then cc[0]
+                    default then "#{cc[0]}-#{cc[1]}"
+                ).join('') + "]"
+              case p.0 is null then "."
+              default then '⚠'
+              ).replace /\n/g, inv 'n'
+            case 'STAR','PLUS','VOID','OPT','AND','NOT'
+              c = print_ops p.0
+              if precedence.indexOf(f.name) < precedence.indexOf(p.0.func.name) then c = "(#c)"
+              switch f.name
+                case 'STAR' then "#c*"
+                case 'PLUS' then "#c+"
+                case 'VOID' then ":#c"
+                case 'OPT' then "#c?"
+                case 'AND' then "&#c"
+                case 'NOT' then "!#c"
+            case 'SEQ', 'ALT', 'PASS'
+              cc = p.0.map (c) -> if precedence.indexOf(f.name) < precedence.indexOf(c.func.name) then "(#{print_ops c})" else print_ops c
+              switch f.name
+                case 'SEQ' then cc.join ' '
+                case 'ALT' then cc.join ' | '
+                case 'PASS' then cc.join ' ↺ '
+            default then util.inspect p, {+colors,depth:1}
+        u += "  " + print_ops {func:o.0, params:o.3}, o.0.name.endsWith 'NT'
+    log s
+  onkey = (key) ->
+    i = j = state.pos
+    switch key
+      case '\u001b[C' then j++
+      case '\u001b[D' then j--
+    j = (j >? 0) <? stack_trace.length-1
+    if i != j
+      switch
+        case j > i and stack_trace[i] instanceof abpv1.Ast then state.stack.pop!
+        case j > i then state.stack.push stack_trace[i]
+        case j < i and stack_trace[j] instanceof abpv1.Ast
+          k = 1 ; jj = j ; while k > 0 then if stack_trace[--jj] instanceof abpv1.Ast then k++ else k--
+          state.stack.push stack_trace[jj]
+        case j < i then state.stack.pop!
+      state.pos = j ; repaint!
+  {paint, onkey}
+
+inspect = (x, memory, stack, {running=false,stack_trace=null}) ->
   @status =
     stacksize: 0
     starttime: new Date!.getTime!
     started: false
-    running: isRunning
+    running: running
+    stack_trace: stack_trace
   @screen =
     paint: ->
       todo 'better suggestions here than just going through the buffer, e.g. some statistically trained suggestions'
     onkey: ->
   @istream = if process.stdin.isTTY? then process.stdin else new tty.ReadStream fs.openSync '/dev/tty', 'r'
   @paint = (screen=true) ~>
-    let key = colors.bold
-      write '\u001b[0;0H\u001b[K' + "#{key 's'} stack #{key 'm'} memory #{if @status.running then "#{key 'c'} cancel parsing [stack #{stack.length}]" else ""}"
-      if screen
-        process.stdout.write '\u001b[2;0H\u001b[J'
-        @screen.paint!
+    try
+      let key = colors.bold
+        write '\u001b[0;0H\u001b[K' + "#{key 's'} stack #{key 'm'} memory #{if @status.stack_trace? then "#{key 't'} stack trace" else ""}#{if @status.running then "#{key 'c'} cancel parsing [stack #{stack.length}]" else ""}"
+        if screen
+          process.stdout.write '\u001b[2;0H\u001b[J'
+          @screen.paint!
+    catch e
+      log e
   @start = ~>
     log "Press #{colors.bold 'd'} to start interactive debugging"
     @istream
@@ -142,6 +228,10 @@ inspect = (x, memory, stack, isRunning=false) ->
           case 'm'
             @screen = memory_screen memory, x, @paint
             @paint!
+          case 't'
+            if @status.stack_trace?
+              @screen = stack_trace_screen @status.stack_trace, @paint
+              @paint!
           case 'd'
             if not @status.started
               != @status.started
@@ -155,8 +245,7 @@ inspect = (x, memory, stack, isRunning=false) ->
               stack.unshift stop
               log 'parsing was canceled.'
           case '\u0003'
-            @istream.removeListener 'data', @callback
-            clearInterval @interval
+            @end!
             log '^C'
             process.exit!
           default @screen.onkey d
@@ -171,12 +260,16 @@ inspect = (x, memory, stack, isRunning=false) ->
     if @status.started then write '\u001b[?47l\u001b8'
   @
 
-export debug_parse = (x, grammar, parser_options={}, {print_ast=true}={}) ->
+export debug_parse = (x, grammar, parser_options={}, {print_ast=true,stack_trace=false}={}) ->
   (fulfill) <- new Promise _
   memory = {name:'inspector_memory'}
   stack = []
     ..name = 'inspector_stack'
-  inspect_inst = new inspect x, memory, stack, true
+  if stack_trace?
+    stack_trace := []
+    stack._pop = stack.pop ; stack.pop = -> x = stack._pop! ; stack_trace.push x ; x
+    stack._push = stack.push ; stack.push = (...arg) -> stack_trace.push ...arg ; stack._push ...arg
+  inspect_inst = new inspect x, memory, stack, {+running,stack_trace}
   inspect_inst.start!
   ast <- abpv1.parse(x, grammar, Object.assign parser_options, {memory,stack}).catch(log).then _
   if ast.status == 'fail'
@@ -185,10 +278,10 @@ export debug_parse = (x, grammar, parser_options={}, {print_ast=true}={}) ->
     fulfill!
   else
     inspect_inst.end!
-    if print_ast then print_pruned_ast ast
+    if print_ast then log printed_pruned_ast ast
     fulfill ast
 
-print_pruned_ast = (ast) ->
+printed_pruned_ast = (ast) ->
   {f,b,inv,dim} = colors
   short_print = (prefix, ast) ->
     if util.isString ast
@@ -202,7 +295,7 @@ print_pruned_ast = (ast) ->
       else then for c in ast.children
         s += '\n' + prefix + (short_print prefix, c)
       s
-  log short_print '',ast
+  short_print '',ast
 
 # tests
 if process.argv.1.endsWith 'inspector.ls'

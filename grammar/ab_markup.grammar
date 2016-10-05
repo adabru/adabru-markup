@@ -8,7 +8,7 @@ Paperroll ← (:'\n' | Block)*
 
 Block ↖ Slides | Header | Blockquote | Codeblock | Linknote | Filetree | List | Table | Info | Warning | Paragraph | Invalid_Block
 
-Slides ← :'---' :' '? Slides_Id? :'\n' ((Slides_Multislide | Slides_Item)* :'--\n'?) :'---'
+Slides ← :'---' :' '? Slides_Id? :'\n' ((Slides_Multislide | Slides_Item) :'--\n'?)* :'---'
 Slides_Id ← (!'\n' .)+
 Slides_Multislide ← Slides_Item (:'-↓\n' Slides_Item)+
 Slides_Item ← (!('--\n' | '---\n' | '-↓\n') (:'\n' | Block))+

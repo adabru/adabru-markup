@@ -193,4 +193,4 @@ promise = switch argv.i
         error "input file '#{argv.i}' does not exist"
         if suggestion? then log "did you mean '#{colors.bold suggestion}'?"
 s <- promise?.catch(log).then _
-ast <- inspector.debug_parse(s, grammar, (if argv.nt? then {startNT:argv.nt}), {+print_ast}).catch(log).then _
+ast <- inspector.debug_parse(s, grammar, (if argv.nt? then {startNT:argv.nt}), {+print_ast,+stack_trace}).catch(log).then _
