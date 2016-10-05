@@ -81,12 +81,12 @@ Image ← :'![' Image_Alt :'](' Image_Url :')'
 Image_Alt ← (!']' Span)*
 Image_Url ← (!')' .)+
 
-Technical ↖ :'`' (Apielement | Keystroke | Brand | Path | Code) :'`'
-Apielement ← :'@' (!'`' .)+
-Brand ← (![™`] .)+ :'™'
-Keystroke ← :'⌨' (Key :' '?)+
-Key ← (![` ] .)+
-Path ← (![⇑`] .)+ :'↑'
-Code ← (!'`' .)+
+Technical ↖ Apielement | Keystroke | Brand | Path | Code
+Apielement ← :'@' [^ \n]+
+Brand ← [^ \n™]+ :'™'
+Keystroke ← :'⌨' (Key :' '?)+
+Key ← [^  \n]+
+Path ← :'↑' [^ \n]+
+Code ← :'`' [^`\n]+ :'`'
 
-Iframe ← :'⎡' (![ \n] .)+
+Iframe ← :'⎡' [^ \n]+

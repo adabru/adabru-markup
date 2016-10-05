@@ -102,7 +102,7 @@ AdabruArticle = React.createClass do
       onScroll: (event) ~>
         if event.target == @refs.scroll
           if @props.onScrolled?
-            scrolledToItem = @props.items.find (item) ~> @refs[item.props.id].getBoundingClientRect().top >= 0
+            scrolledToItem = @props.items.find (item) ~> ReactDOM.findDOMNode(@refs[item.props.id]).getBoundingClientRect().top >= 0
             @props.onScrolled scrolledToItem.props.id
           @setState {scrollTop: event.target.scrollTop}
       @props.items.map (item) ~>
@@ -111,7 +111,7 @@ AdabruArticle = React.createClass do
         React.cloneElement item, props
   scrollTo: (id) ->
     if @refs[id]?
-      @animate {scrollTop: @refs.scroll.scrollTop + @refs[id].getBoundingClientRect().top}, 500
+      @animate {scrollTop: @refs.scroll.scrollTop + ReactDOM.findDOMNode(@refs[id]).getBoundingClientRect().top}, 500
     else
       console.warn 'There is no ref to a top-level element with id: "'+id+'"! So no scrolling to it'
 
