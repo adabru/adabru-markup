@@ -24,8 +24,8 @@ adabru_v1_parser = new
           if c[i++] != x[pos++] then break
         c[i-1] == x[pos-1]
       case util.isArray c # char class
-        pos++
-        if c[0] == '^' then (c.slice 1).every ((cc) -> not (cc[0] <= x[pos-1] <= cc[1]))
+        pos++ < x.length
+        and if c[0] == '^' then (c.slice 1).every ((cc) -> not (cc[0] <= x[pos-1] <= cc[1]))
                        else c.some ((cc) -> cc[0] <= x[pos-1] <= cc[1])
       case c is null # any
         pos++ < x.length
@@ -292,7 +292,7 @@ export parse = (x, grammar, options={}) ->
   # technical parsing
   options.stack.push [node.func, {x,x_hash:util.hash(x)}, 0, node.params, []]
   ast <- parser.parse(options.stack).then _
-  if ast.end != x.length then ast.status = 'fail'
+  if ast.end != x.length then ast.status = 'fail' ; ast.error = 'did not capture whole input'
   if ast.status == 'fail' then return fulfill ast
   # postprocess ast, result is of form {name:'S', children:['adf', {name:'A', children:…}, '[a-z]']}
   pruned = (x, ast) -->

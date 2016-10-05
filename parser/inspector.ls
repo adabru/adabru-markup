@@ -86,8 +86,7 @@ memory_screen = (memory, x, repaint) ->
           state.pos[state.hash] = j
           repaint!
   paint = ->
-    key = colors.bold
-    log "#{key '0-9 ← → BS'} move to character #{key '↓ ↑'} change buffer #{key 'Ctrl-C'} leave\n"
+    log "#{bold '0-9 ← → BS'} move to character #{bold '↓ ↑'} change buffer\n"
     if (state.hash.match(/([^:]+)/g) || []).length is 0
       let j = state.pos[state.hash]
         hashes = Object.keys(memory).filter((k)->k.startsWith x_hash)
@@ -112,17 +111,19 @@ stack_screen = (stack) ->
   onkey: ->
 
 stack_trace_screen = (stack_trace, repaint) ->
-  {f,inv} = colors
+  {f,inv,bold} = colors
   state =
     pos: 0
     stack: []
+    showLocal: false
   operator_map =
     'PACKRAT_NT':'🕮','FIRST_LETTER_NT':'🌔','T':'T','PASS':'↺','PLUS':'+','STAR':'*','SEQ':'─','OPT':'?','VOID':':','NOT':'!','AND':'&','ALT':'|','NT':''
   paint = ->
+    s = "#{bold '↑ ↓ → ←'} move in trace #{bold 'l'} toggle locals\n\n"
     symbols = state.stack.map ([f,x,pos,params,local]) -> if f.name is 'NT' then params.0 else operator_map[f.name]
     last_symbol = symbols.pop!
     o = stack_trace[state.pos]
-    s = "↘ "+symbols.join ' '
+    s += "↘ "+symbols.join ' '
     s += ' ' + switch
       case not (o instanceof abpv1.Ast) then last_symbol
       case o.status == 'fail' then f.1 last_symbol
@@ -175,25 +176,41 @@ stack_trace_screen = (stack_trace, repaint) ->
                 case 'PASS' then cc.join ' ↺ '
             default then util.inspect p, {+colors,depth:1}
         u += "  " + print_ops {func:o.0, params:o.3}, o.0.name.endsWith 'NT'
+        if state.showLocal then u += "\n#{util.inspect o.4, {+colors}}"
+        u
     log s
   onkey = (key) ->
     i = j = state.pos
+    stepLeft = ->
+      if j is 0 then return
+      j--
+      if stack_trace[j] instanceof abpv1.Ast
+        k = 1 ; jj = j ; while k > 0 then if stack_trace[--jj] instanceof abpv1.Ast then k++ else k--
+        state.stack.push stack_trace[jj]
+      else then state.stack.pop!
+    stepRight = ->
+      if j is stack_trace.length - 1 then return
+      if stack_trace[j] instanceof abpv1.Ast then state.stack.pop! else state.stack.push stack_trace[j]
+      j++
     switch key
-      case '\u001b[C' then j++
-      case '\u001b[D' then j--
-    j = (j >? 0) <? stack_trace.length-1
+      case '\u001b[A'
+        sl = state.stack.length
+        if sl > 0 then while sl <= state.stack.length then stepLeft!
+      case '\u001b[B'
+        if stack_trace[j] instanceof abpv1.Ast then stepRight!
+        sl = state.stack.length
+        if sl > 2
+          while sl <= state.stack.length then stepRight!
+          stepLeft!
+      case '\u001b[C' then stepRight!
+      case '\u001b[D' then stepLeft!
+      case 'l' then != state.showLocal ; return repaint!
     if i != j
-      switch
-        case j > i and stack_trace[i] instanceof abpv1.Ast then state.stack.pop!
-        case j > i then state.stack.push stack_trace[i]
-        case j < i and stack_trace[j] instanceof abpv1.Ast
-          k = 1 ; jj = j ; while k > 0 then if stack_trace[--jj] instanceof abpv1.Ast then k++ else k--
-          state.stack.push stack_trace[jj]
-        case j < i then state.stack.pop!
       state.pos = j ; repaint!
   {paint, onkey}
 
 inspect = (x, memory, stack, {running=false,stack_trace=null}) ->
+  {bold} = colors
   @status =
     stacksize: 0
     starttime: new Date!.getTime!
@@ -207,15 +224,14 @@ inspect = (x, memory, stack, {running=false,stack_trace=null}) ->
   @istream = if process.stdin.isTTY? then process.stdin else new tty.ReadStream fs.openSync '/dev/tty', 'r'
   @paint = (screen=true) ~>
     try
-      let key = colors.bold
-        write '\u001b[0;0H\u001b[K' + "#{key 's'} stack #{key 'm'} memory #{if @status.stack_trace? then "#{key 't'} stack trace" else ""}#{if @status.running then "#{key 'c'} cancel parsing [stack #{stack.length}]" else ""}"
-        if screen
-          process.stdout.write '\u001b[2;0H\u001b[J'
-          @screen.paint!
+      write '\u001b[0;0H\u001b[K' + "#{bold 's'} stack #{bold 'm'} memory#{if @status.stack_trace? then " #{bold 't'} stack trace" else ""}#{if @status.running then " #{bold 'c'} cancel parsing [stack #{stack.length}]" else ""}  #{bold 'Ctrl-C'} leave"
+      if screen
+        process.stdout.write '\u001b[2;0H\u001b[J'
+        @screen.paint!
     catch e
       log e
   @start = ~>
-    log "Press #{colors.bold 'd'} to start interactive debugging"
+    log "Press #{bold 'd'} to start interactive debugging"
     @istream
       ..setEncoding 'utf8'
       ..setRawMode true
