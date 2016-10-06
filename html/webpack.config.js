@@ -3,7 +3,7 @@ var RawSource = require("webpack-sources").RawSource;
 var jsmin = require('jsmin')
 
 module.exports = {
-  entry: ['./html/js/core.coffee'],
+  entry: ['./html/js/core.ls'],
   module: {
     loaders: [
       {test: /\.coffee$/, loader: 'coffee'}

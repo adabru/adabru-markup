@@ -78,6 +78,7 @@ help = ->
                   defaults to first given rule in grammar
       -c <file>   write compiled parser to <file>, if <file>
                   is not given, it is written to stdout
+      -d          enter debug mode even on success
       --help
 
   \u001b[1mExamples\u001b[0m
@@ -97,7 +98,7 @@ grammar_up_to_date = check_file argv.c and check_file argv._[0] and (fs.statSync
 inspector = require './inspector.js'
 grammar_get = if grammar_up_to_date
   (fulfill) <- new Promise _
-  log 'The generated parser is newer than the grammar definition.'
+  log 'The generated parser is newer than the grammar definition, using it'
   abpv1 = require './abpv1.js'
   fulfill JSON.parse fs.readFileSync argv.c, {encoding: 'utf8'}
 else
@@ -147,12 +148,16 @@ else
             case '\''
               t = ast.children[0].substr 1, ast.children[0].length-2
               specials = '\\b':'\b', '\\f':'\f', '\\n':'\n', '\\O':'\O', '\\r':'\r', '\\t':'\t', '\\v':'\v', '\\\'':'\'', '\\\\':'\\'
-              for k of specials then t = t.replace k, specials[k]
+              i = 0 ; while  i < t.length-1
+                if specials[t.substr i,2]? then t = t.substring(0,i) + specials[t.substr i,2] + t.substring i+2
+                i++
               [t]
             case '['
               specials = '\\b':'\b', '\\f':'\f', '\\n':'\n', '\\O':'\O', '\\r':'\r', '\\t':'\t', '\\v':'\v', '\\]':']', '\\\\':'\\'
               t = ast.children[0].substr 1, ast.children[0].length-2
-              for k of specials then t = t.replace k, specials[k]
+              i = 0 ; while  i < t.length-1
+                if specials[t.substr i,2]? then t = t.substring(0,i) + specials[t.substr i,2] + t.substring i+2
+                i++
               res = []
               i = 0
               if t[i] == '^' then res ++= t[i++]
@@ -193,4 +198,4 @@ promise = switch argv.i
         error "input file '#{argv.i}' does not exist"
         if suggestion? then log "did you mean '#{colors.bold suggestion}'?"
 s <- promise?.catch(log).then _
-ast <- inspector.debug_parse(s, grammar, (if argv.nt? then {startNT:argv.nt}), {+print_ast,+stack_trace}).catch(log).then _
+ast <- inspector.debug_parse(s, grammar, (if argv.nt? then {startNT:argv.nt}), {+print_ast,+stack_trace,force_debug:argv.d}).catch(log).then _

@@ -10,7 +10,7 @@ for f in fs.readdirSync('./parser').filter((x)->x is /\.ls$/)
   if fs.statSync("#f.ls").mtime.getTime! > fs.statSync("#f.js").mtime.getTime!
     child_process.execSync "lsc -c #f.ls", encoding:'utf-8',stdio:'inherit'
 
-child_process.execSync 'node ./parser/generator.js ./grammar/ab_markup.grammar -c ./html/js/build/ab_markup_grammar.json'
+child_process.execSync 'node ./parser/generator.js ./grammar/ab_markup.grammar -c ./html/js/build/ab_markup_grammar.json', encoding:'utf-8',stdio:'inherit'
 
 abpv1 = require '../parser/abpv1.js'
 grammar = require '../html/js/build/ab_markup_grammar.json'

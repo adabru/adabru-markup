@@ -32,15 +32,15 @@ Filetree ← :'🌲' (:' ' Filetree_Is_Auto_Link? Filetree_Basepath)? :'\n' File
 Filetree_Is_Auto_Link ← :'↑'
 Filetree_Basepath ← [^\n]*
 Filetree_Root ← (Filetree_Item :'\n'?)+
-Filetree_Item ← Filetree_Item_File (:' '* Filetree_Item_Description)? (Filetree_Item_Children)?
+Filetree_Item ← Filetree_Item_File (:' '* Filetree_Item_Description)? (:'\n' Filetree_Item_Children)?
 Filetree_Item_File ← [^ \n]+
 Filetree_Item_Description ← (!'\n' Span)*
-Filetree_Item_Children ← (:'\n  ' [^\n]+)+ ↺ (Filetree_Item :'\n'?)+
+Filetree_Item_Children ← ('\n'? :'  ' [^\n]+)+ ↺ (Filetree_Item :'\n'?)+
 
 List ↖ List_Ordered | List_Unordered
 List_Ordered ← ( :[0-9]+ :'. ' List_Item :'\n' )+
 List_Unordered ← (:'- ' List_Item :'\n'?)+
-List_Item ← (('\n' :'  ')? [^\n])+
+List_Item ← (('\n'+ :'  ')? [^\n])+
           ↺ (:'\n' | (Slides | Header | Blockquote | Codeblock | Linknote | List | Table | List_Item_Paragraph | Invalid_Block) )+
 List_Item_Paragraph ← ( !('\n\n' | '\n- ') '\n'? (!'\n' (Newline|Span))+ )+
 
@@ -51,8 +51,8 @@ Table_Body ← Table_Body_Row*
 Table_Body_Row ← !'\n' :'|'? Table_Body_Row_Item (:'|' Table_Body_Row_Item)* :'\n'
 Table_Body_Row_Item ← (!('|'|'\n') Span)*
 
-Info ← (:'ℹ' ![ \n] (!'\n' Span)+) | (:'ℹ ' Block) | (:'ℹ\n' (:'\n' | Block )* :'ℹ')
-Warning ← (:'⚠' ![ \n] (!'\n' Span)*) | (:'⚠ ' Block)
+Info ← (:'ℹ ' Block) | (:'ℹ\n' (!'\n\n' (:'\n' | Block))*)
+Warning ← :'⚠ ' Block
 
 Paragraph ← ( (!'\n' (Newline|Span))+ '\n'? )+
 Newline ← :'  \n'
@@ -61,7 +61,7 @@ Invalid_Block ← ( (!'\n' .)+ '\n')+
 
 ### Span Elements
 
-Span ↖ Hover | Link | Emphasis | Image | Technical | Iframe | .
+Span ↖ Hover | Link | Emphasis | Image | Technical | Info_Span | Warning_Span | Iframe | .
 
 Hover ← :'[' Hover_Content :']((' Link_Url :'))'
 Hover_Content ← (!']' Span)+
@@ -81,12 +81,16 @@ Image ← :'![' Image_Alt :'](' Image_Url :')'
 Image_Alt ← (!']' Span)*
 Image_Url ← (!')' .)+
 
-Technical ↖ Apielement | Keystroke | Brand | Path | Code
+Technical ↖ Apielement | Keystroke | Brand | Path | Code | Terminal
 Apielement ← :'@' [^ \n]+
 Brand ← [^ \n™]+ :'™'
 Keystroke ← :'⌨' (Key :' '?)+
 Key ← [^  \n]+
 Path ← :'↑' [^ \n]+
 Code ← :'`' [^`\n]+ :'`'
+Terminal ← :'└▪' [^↵\n]+ :'↵'
 
 Iframe ← :'⎡' [^ \n]+
+
+Info_Span ← :'ℹ' ![ \n] (!'\n' Span)+
+Warning_Span ← :'⚠' ![ \n] (!'\n' Span)+

@@ -10,7 +10,7 @@ if process.env.BROWSER?
 
 # container for async loading as suggested here:
 # http://andrewhfarmer.com/react-ajax-best-practices/
-AdabruCodeContainer = React.createClass
+AdabruCodeContainer = React.createClass do
   displayName: '_CodeContainer'
   getInitialState: -> {
     importedContent: 'Loading file…'
@@ -28,22 +28,20 @@ AdabruCodeContainer = React.createClass
         self.setState { importedContent: text }
   render: ->
     if not @props.import?
-      React.createElement(AdabruCode, @props)
+      React.createElement AdabruCode, @props
     else
-      childProps = _.omit(@props, ['import'])
-      childProps.content = @state.importedContent
-      React.createElement(AdabruCode, childProps)
+      pp = {} <<<< @props ; pp.content =@state.importedContent
+      React.createElement AdabruCode, pp
 
 
-AdabruCode = React.createClass
+AdabruCode = React.createClass do
   displayName: '_Code'
-  getDefaultProps: -> {
-      syntax: 'javascript'
-      content: 'var content=""'
-      scrollToMe: ->
-        console.log 'scroll not supported'
-    }
-  getInitialState: -> {
+  getDefaultProps: ->
+    syntax: 'javascript'
+    content: 'var content=""'
+    scrollToMe: ->
+      console.log 'scroll not supported'
+  getInitialState: ->
       contentHash: 0
       clientHeight: 0
       folded: true
@@ -52,30 +50,26 @@ AdabruCode = React.createClass
         top: 0
         numChars: 0
         flashState: 0
-    }
   componentDidMount: ->
     @highlightCode()
-    @setState {
-        clientHeight: ReactDOM.findDOMNode(this).clientHeight
-        contentHash: @hashCode @props.content
-      }
+    @setState do
+      clientHeight: ReactDOM.findDOMNode(this).clientHeight
+      contentHash: @hashCode @props.content
   componentWillReceiveProps: (nextProps) ->
     if @state.contentHash != @hashCode nextProps.content
       # trigger new measurement
-      @setState { clientHeight: 0 }
+      @setState clientHeight: 0
   componentDidUpdate: ->
     @highlightCode()
     hash = @hashCode @props.content
     if @state.contentHash != hash
       # content changed
-      @setState {
-          clientHeight: ReactDOM.findDOMNode(this).clientHeight
-          contentHash: hash
-        }
-
+      @setState do
+        clientHeight: ReactDOM.findDOMNode(this).clientHeight
+        contentHash: hash
   render: ->
     # copy-confirmation
-    conf = span
+    conf = span do
       className: 'copyconfirmation ' + if @state.confirmationState.flashState == 0 then 'flash1' else 'flash2'
       style:
         left: @state.confirmationState.left
@@ -84,35 +78,35 @@ AdabruCode = React.createClass
 
     # whole dom
     if @state.clientHeight < 300
-      pre
+      pre do
         onMouseUp: @copyContent
-        code
+        code do
           className: @props.syntax
           @props.content
-        textarea
+        textarea do
           value: @props.content
           readOnly: true
         conf
     else
       self = @
 
-      div
+      div do
         className: 'code-wrapper'
-        pre
+        pre do
           className: if @state.folded then 'collapsed' else 'expanded'
           style:
             height: if @state.folded then 200 else @state.clientHeight
           onMouseUp: @copyContent
-          div
+          div do
             className: 'code-fade'
-          code
+          code do
             className: @props.syntax
             @props.content
-          textarea
+          textarea do
             value: @props.content
             readOnly: true
           conf
-        button
+        button do
           onClick: @toggleCollapse
 
   highlightCode: ->
@@ -132,12 +126,11 @@ AdabruCode = React.createClass
 
     # show confirmation
     # animation on update: https://github.com/ordishs/react-animation-example
-    @setState { confirmationState:
-        flashState: (@state.confirmationState.flashState + 1) % 2
-        numChars: length
-        left: event.pageX
-        top: event.pageY
-      }
+    @setState confirmationState:
+      flashState: (@state.confirmationState.flashState + 1) % 2
+      numChars: length
+      left: event.pageX
+      top: event.pageY
   toggleCollapse: (event) ->
     if not @state.folded
       @props.scrollToMe()
@@ -145,7 +138,7 @@ AdabruCode = React.createClass
       #         $('article').animate({scrollTop: scrollDiff}, 400)
     @setState { folded: not @state.folded }
   hashCode: (str) ->
-      str.length
+    str.length
 
 Object.assign exports ? this, {
   AdabruCodeContainer: AdabruCodeContainer

@@ -132,7 +132,7 @@ td, th {
   border: 1px solid grey;
 }
 
-.info {
+div.info {
   position: relative;
   border: 1px solid #aaa;
   background-color: #eee;
@@ -141,7 +141,7 @@ td, th {
   margin: 5px 20px;
   padding: 5px 0px;
 }
-.info:before {
+div.info:before {
   content: 'ℹ';
   position: absolute;
   padding: 0 10;
@@ -152,16 +152,16 @@ td, th {
   border-radius: 100px;
   padding: 0 .4em;
 }
-.warning {
+div.warning {
   position: relative;
   border: 1px solid #986;
   background-color: #fec;
   border-radius: 10px;
+  color: #986;
   margin: 5px 20px;
   padding: 5px 0px;
-  color: #986;
 }
-.warning:before {
+div.warning:before {
   content: '⚠';
   position: absolute;
   padding: 0 10;

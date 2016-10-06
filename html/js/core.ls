@@ -9,15 +9,16 @@ abpv1 = require '../../parser/abpv1.js'
 
 {AdabruTableofcontents, AdabruArticle} = require './toc.ls'
 {AdabruFiletree} = require './filetree.ls'
-{AdabruCodeContainer} = require './code.coffee'
-{AdabruSlides} = require './slides.coffee'
+{AdabruCodeContainer} = require './code.ls'
+{AdabruSlides} = require './slides.ls'
 
 if process.env.BROWSER?
+  require '../css/reset.css'
   require '../css/core.css'
   require '../css/block.css'
   require '../css/span.css'
 
-AdabruPage = React.createClass
+AdabruPage = React.createClass do
   displayName: '_Page'
   getDefaultProps: -> {
     showTOC: true
@@ -42,18 +43,18 @@ AdabruPage = React.createClass
     )
 
     if @props.showTOC
-      div
+      div do
         id: 'adabruPage'
         React.createElement( AdabruTableofcontents,
           items: AdabruTableofcontents.extractItemsFrom(@props.topItems)
-          onItemClick: (event,id) =>
+          onItemClick: (event,id) ~>
             window.history.replaceState(null, null, window.location.origin + window.location.pathname + window.location.search + '#'+id)
             @setState {clicked: {id: id, time: (new Date).getTime()}}
           highlightId: @state.shownSection
         )
         art
     else
-      div
+      div do
         id: 'adabruPage'
         art
   onScrolled: (id) ->
@@ -78,15 +79,14 @@ adabruMarkup =
     @store = {}
 
     # merge strings
-    @visit(
+    @visit do
       ast
-      (ast) =>
-        ast.children?.some((c) -> c.name == undefined) and ast.children?.length > 1
-      (ast) =>
-        for i in [ast.children.length-1 .. 1]
+      (ast) ~>
+        ast.children?.some((c) -> not c.name?) and ast.children?.length > 1
+      (ast) ~>
+        for i in [ast.children.length-1 to 1]
           if ast.children[i].name == undefined and ast.children[i-1].name == undefined
             ast.children[i-1] += ast.children.splice(i,1)
-    )
 
 
     # link-references
@@ -94,9 +94,9 @@ adabruMarkup =
 
     @visit(
       ast
-      (ast) =>
+      (ast) ~>
         ast.name == 'Linknote'
-      (ast) =>
+      (ast) ~>
         @store.linkReference[@printChild(ast, 'Link_Text')] = @printChild(ast, 'Link_Url')
     )
 
@@ -115,7 +115,7 @@ adabruMarkup =
     if ast.children.length == 1
       @printTree(ast.children[0])
     else
-      ast.children.map (c,i) =>
+      ast.children.map (c,i) ~>
         t = @printTree c
         if React.isValidElement t
           React.cloneElement t, {key: i}
@@ -127,33 +127,33 @@ adabruMarkup =
 
   printTree: (ast) ->
     switch ast.name
-      when 'Document'
+      case 'Document'
         React.createElement( AdabruPage, {
           showTOC: @getChild(ast, 'Tableofcontents')?
           topItems: @getChild(ast, 'Paperroll')
             .children.map @printTree, @
-            .filter (c) => c?
-            .map((c,i) => React.cloneElement(c, {id: (c.props.id ? '')+'_'+i, ref: i}))
+            .filter (c) ~> c?
+            .map((c,i) ~> React.cloneElement(c, {id: (c.props.id ? '')+'_'+i, ref: i}))
         })
 
       # blocks
 
-      when 'Slides'
+      case 'Slides'
         React.createElement( AdabruSlides, {
           id: @printChild(ast, 'Slides_Id')
           slides: ast.children
-            .filter (c) => c.name != 'Slides_Id'
-            .map (c) =>
+            .filter (c) ~> c.name != 'Slides_Id'
+            .map (c) ~>
               switch c.name
-                when 'Slides_Multislide'
-                  single.children.map(@printTree,@) for single in c.children
-                when 'Slides_Item'
+                case 'Slides_Multislide'
+                  [single.children.map(@printTree,@) for single in c.children]
+                case 'Slides_Item'
                   [c.children.map(@printTree,@)]
-                else
+                default
                   @unknownAST c
         })
 
-      when 'Header_L1', 'Header_L2', 'Header_L3'
+      case 'Header_L1', 'Header_L2', 'Header_L3'
         level = ast.name[ast.name.length-1]
         processedChildren = @printChildren ast
         [h1,h2,h3][level-1](
@@ -161,7 +161,7 @@ adabruMarkup =
           processedChildren
         )
 
-      when 'Codeblock'
+      case 'Codeblock'
         React.createElement( AdabruCodeContainer, {
           syntax: @printChild(ast, 'Codelanguage')
           import: if (c=@getChild(ast, 'Codeimport'))?
@@ -172,73 +172,76 @@ adabruMarkup =
             c.children.join('')
         })
 
-      when 'Linknote' then undefined
+      case 'Linknote' then undefined
 
-      when 'Filetree'
+      case 'Filetree'
         React.createElement( AdabruFiletree, {
           basepath: @printChild(ast, 'Filetree_Basepath')
           autolink: @getChild(ast, 'Filetree_Is_Auto_Link')?
           children: @getChild(ast, 'Filetree_Root').children.map(@printTree,@)
         })
-      when 'Filetree_Item' then {
+      case 'Filetree_Item' then {
         file: @printChild(ast, 'Filetree_Item_File')
         description: @printChild(ast, 'Filetree_Item_Description')
         children: if (c=@getChild(ast, 'Filetree_Item_Children'))? then c.children.map(@printTree,@) else []
       }
 
-      when 'List_Ordered' then ol({}, @printChildren(ast))
-      when 'List_Unordered' then ul({},   @printChildren(ast))
-      when 'List_Item' then li({},   @printChildren(ast))
-      when 'List_Item_Paragraph' then p({},   @printChildren(ast))
+      case 'List_Ordered' then ol({}, @printChildren(ast))
+      case 'List_Unordered' then ul({},   @printChildren(ast))
+      case 'List_Item' then li({},   @printChildren(ast))
+      case 'List_Item_Paragraph' then p({},   @printChildren(ast))
 
-      when 'Table' then table({}, tbody({}, @printChildren(ast)))
-      when 'Table_Header' then tr({},   @printChildren(ast))
-      when 'Table_Header_Item' then th({},   @printChildren(ast))
-      when 'Table_Body' then   @printChildren(ast)
-      when 'Table_Body_Row' then tr({},   @printChildren(ast))
-      when 'Table_Body_Row_Item' then td({},   @printChildren(ast))
+      case 'Table' then table({}, tbody({}, @printChildren(ast)))
+      case 'Table_Header' then tr({},   @printChildren(ast))
+      case 'Table_Header_Item' then th({},   @printChildren(ast))
+      case 'Table_Body' then   @printChildren(ast)
+      case 'Table_Body_Row' then tr({},   @printChildren(ast))
+      case 'Table_Body_Row_Item' then td({},   @printChildren(ast))
 
-      when 'Info' then div({className: 'info'},   @printChildren(ast))
-      when 'Warning' then div({className: 'warning'},   @printChildren(ast))
+      case 'Info' then div({className: 'info'},   @printChildren(ast))
+      case 'Warning' then div({className: 'warning'},   @printChildren(ast))
 
-      when 'Paragraph' then p({},   @printChildren(ast))
-      when 'Newline' then br({})
+      case 'Paragraph' then p({},   @printChildren(ast))
+      case 'Newline' then br({})
 
       # spans
 
-      when 'Hover'
-        span
+      case 'Hover'
+        span do
           className: 'hover_span'
-          img
+          img do
             src: @printChild(ast, 'Link_Url')
-          span
-            x: ''
+          span do
+            {}
             @printChildren @getChild(ast, 'Hover_Content')
-      when 'Link_Inline' then a({href:@printChild(ast, 'Link_Url')}, @printChildren @getChild(ast, 'Link_Text') )
-      when 'Link_Reference'
+      case 'Link_Inline' then a({href:@printChild(ast, 'Link_Url')}, @printChildren @getChild(ast, 'Link_Text') )
+      case 'Link_Reference'
         text = @printChild(ast, 'Link_Text')
         a({href: @store.linkReference[text]}, text)
-      when 'Link_Auto'
+      case 'Link_Auto'
         url = ast.children.join('')
         a({href: url}, url)
-      when 'Emphasis_Italic' then em({},   @printChildren(ast))
-      when 'Emphasis_Bold' then strong({},   @printChildren(ast))
-      when 'Image' then img({src: @printChild(ast, 'Image_Url'), alt: @printChild(ast, 'Image_Alt')})
-      when 'Apielement' then span({className: 'apielement'},    @printChildren(ast))
-      when 'Keystroke' then kbd({},   @printChildren(ast))
-      when 'Key' then span({className: 'keystroke'}, ast.children[0])
-      when 'Brand' then span({className: 'brand'}, ast.children[0])
-      when 'Path' then span({className: 'path'}, ast.children[0])
-      when 'Code' then code({}, ast.children[0])
-      when 'Iframe' then iframe({
+      case 'Emphasis_Italic' then em({},   @printChildren(ast))
+      case 'Emphasis_Bold' then strong({},   @printChildren(ast))
+      case 'Image' then img({src: @printChild(ast, 'Image_Url'), alt: @printChild(ast, 'Image_Alt')})
+      case 'Apielement' then span({className: 'apielement'},    @printChildren(ast))
+      case 'Keystroke' then kbd({},   @printChildren(ast))
+      case 'Key' then span({className: 'keystroke'}, ast.children[0])
+      case 'Brand' then span({className: 'brand'}, ast.children[0])
+      case 'Path' then span({className: 'path'}, ast.children[0])
+      case 'Code' then code({}, ast.children[0])
+      case 'Terminal' then span({className: 'terminal'}, ast.children[0])
+      case 'Iframe' then iframe({
         src: ast.children.join('')
         onLoad: (e) ->
           {width,height} = e.target.contentDocument.body.getBoundingClientRect()
           e.target.style.height = height
           e.target.style.width = width
       })
-      when undefined then ast
-      else @unknownAST ast
+      case 'Info_Span' then span({className: 'info'},   @printChildren(ast))
+      case 'Warning_Span' then span({className: 'warning'},   @printChildren(ast))
+      case undefined then ast
+      default then @unknownAST ast
 
 Object.assign exports ? this, {
   parseDocument: adabruMarkup.parseDocument.bind(adabruMarkup)

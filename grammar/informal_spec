@@ -78,4 +78,4 @@ Klick [mich][] jo
 *emph1*  **emph2**  ***emph3***  `code` 'simple"  highlight'
 ⎡./my/iframe.html
 ![](./image/without.alt)  [Text `code`]((./images/hover.gif))  <http://go.com>
-⌨Ctrl E 𐌎 Cocos2D JS™ ↑./images/nobreak space/all_good.gif ↑/home/adabru/ @Sprite
+⌨Ctrl E 𐌎 Cocos2D JS™ ↑./images/nobreak space/all_good.gif ↑/home/adabru/ @Sprite └▪grep -r d .↵

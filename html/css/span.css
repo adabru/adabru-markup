@@ -65,6 +65,45 @@ span.path {
   color: #000;
 }
 
+span.terminal {
+  background-color: #300a24;
+  color: #ffffff;
+  font-family: monospace;
+  font-size: .8em;
+  padding: .2em;
+}
+span.terminal::before {
+  content: '> ';
+}
+
+span.info {
+  border: 1px solid #aaa;
+  background-color: #eee;
+  border-radius: 10px;
+  color: #888;
+}
+span.info:before {
+  content: 'ℹ';
+  font-size: .8em;
+  border: 1px solid #ccc;
+  color: #ccc;
+  border-radius: 100px;
+  padding: 0 .1em;
+}
+span.warning {
+  background-color: #fec;
+  border-radius: 10px;
+  color: #986;
+}
+span.warning:before {
+  content: '⚠';
+  font-size: .8em;
+  border: 1px solid #dca;
+  color: #dca;
+  border-radius: 100px;
+  padding: 0 .1em;
+}
+
 iframe {
   border: 1px solid green;
 }

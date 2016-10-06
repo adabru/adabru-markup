@@ -69,6 +69,10 @@ Downloading zip from https://github.com/adabru/adabru-markup and extracting.
 - React components in browser
   in browser console: 'ReactDOM.render(React.createElement(AdabruArticle),document.querySelector("#app"))'
 
+- directory serving
+  └▪./html/js/server.ls -d ./dev↵
+  point browser to 'localhost:5555'
+
 ### Releasing
 
 └▪npm version [major | minor | patch | …]↵
