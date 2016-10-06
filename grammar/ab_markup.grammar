@@ -61,7 +61,7 @@ Invalid_Block ← ( (!'\n' .)+ '\n')+
 
 ### Span Elements
 
-Span ↖ Hover | Link | Emphasis | Image | Technical | Info_Span | Warning_Span | Iframe | .
+Span ↖ Hover | Link | Emphasis | Image | Technical | Info_Span | Warning_Span | Iframe | Brand | .
 
 Hover ← :'[' Hover_Content :']((' Link_Url :'))'
 Hover_Content ← (!']' Span)+
@@ -81,9 +81,8 @@ Image ← :'![' Image_Alt :'](' Image_Url :')'
 Image_Alt ← (!']' Span)*
 Image_Url ← (!')' .)+
 
-Technical ↖ Apielement | Keystroke | Brand | Path | Code | Terminal
+Technical ↖ Apielement | Keystroke | Path | Code | Terminal
 Apielement ← :'@' [^ \n]+
-Brand ← [^ \n™]+ :'™'
 Keystroke ← :'⌨' (Key :' '?)+
 Key ← [^  \n]+
 Path ← :'↑' [^ \n]+
@@ -91,6 +90,8 @@ Code ← :'`' [^`\n]+ :'`'
 Terminal ← :'└▪' [^↵\n]+ :'↵'
 
 Iframe ← :'⎡' [^ \n]+
+
+Brand ← [a-zA-Z0-9 ]+ :'™'
 
 Info_Span ← :'ℹ' ![ \n] (!'\n' Span)+
 Warning_Span ← :'⚠' ![ \n] (!'\n' Span)+

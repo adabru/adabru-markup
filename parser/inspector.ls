@@ -120,7 +120,7 @@ stack_trace_screen = (stack_trace, repaint) ->
     'PACKRAT_NT':'🕮','FIRST_LETTER_NT':'🌔','T':'T','PASS':'↺','PLUS':'+','STAR':'*','SEQ':'─','OPT':'?','VOID':':','NOT':'!','AND':'&','ALT':'|','NT':''
   paint = ->
     s = "#{bold '↑ ↓ → ←'} move in trace #{bold 'l'} toggle locals\n\n"
-    symbols = state.stack.map ([f,x,pos,params,local]) -> if f.name is 'NT' then params.0 else operator_map[f.name]
+    symbols = state.stack.map ([f,x,pos,{params},local]) -> if f.name is 'NT' then params.0 else operator_map[f.name]
     last_symbol = symbols.pop!
     o = stack_trace[state.pos]
     s += "↘ "+symbols.join ' '
@@ -140,7 +140,7 @@ stack_trace_screen = (stack_trace, repaint) ->
         t = if t.length < 20 then "#{f.3 t}" else "#{f.3 t.substr 0,8}…#{f.3 t.substr -8,8}"
         u += t.replace /\n/g, inv 'n'
       default
-        u = "↘ #{f.3 operator_map[o.0.name]}#{if o.0.name.endsWith 'NT' then f.3 o.3.0 else ''}"
+        u = "↘ #{f.3 operator_map[o.0.name]}#{if o.0.name.endsWith 'NT' then f.3 o.3.params.0 else ''}"
         print_ops = ({func:f,params:p},nt=false) ->
           precedence = ['PLUS','STAR','OPT','VOID','NOT','AND','SEQ','ALT','PASS']
           switch f.name
@@ -175,7 +175,7 @@ stack_trace_screen = (stack_trace, repaint) ->
                 case 'ALT' then cc.join ' | '
                 case 'PASS' then cc.join ' ↺ '
             default then util.inspect p, {+colors,depth:1}
-        u += "  " + print_ops {func:o.0, params:o.3}, o.0.name.endsWith 'NT'
+        u += "  " + print_ops {func:o.0, params:o.3.params}, o.0.name.endsWith 'NT'
         if state.showLocal then u += "\n#{util.inspect o.4, {+colors}}"
         u
     log s
