@@ -161,8 +161,8 @@ else
               res = []
               i = 0
               if t[i] == '^' then res ++= t[i++]
-              while i < t.length then switch
-                case t[i+1] == '-' then res ++= t[i]+t[(i+=3)-1]
+              while t[i]? then switch
+                case t[i+1] == '-' and t[i+2]? then res ++= t[i]+t[(i+=3)-1]
                 default then res ++= t[i]+t[i++]
               [res]
   for rule in ast.children

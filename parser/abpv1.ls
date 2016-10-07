@@ -228,12 +228,19 @@ decorate_parser = (parser, {
           return c_ast
         default
           filtered_children = []
-          for c in children then if (c.first_letter.x ++ c.first_letter.ε).some((cc) -> cc[0] <= x.charCodeAt(pos) <= cc[1])
-            filtered_children.push c
+          for c in children
+            if (c.first_letter.x ++ c.first_letter.ε).some((cc) -> cc[0] <= x.charCodeAt(pos) <= cc[1])
+              filtered_children.push c
           if filtered_children.length is 0
             return new Ast '_ALT',pos,pos,pos+1,'fail'
           else
             _call alt, {x,x_hash}, pos, {func:alt,params:[filtered_children]}
+  parser.regex = !function REGEX({x,x_hash}, pos, node)
+    {regex} = node
+    r = new RegExp regex, 'gy'
+      ..lastIndex = pos
+    if r.test x then return new Ast '_T',pos,r.lastIndex,x.length,'success'
+    else             return new Ast '_T',pos,pos,x.length,'fail'
   parser
 
 export parse = (x, grammar, options={}) ->
@@ -251,7 +258,7 @@ export parse = (x, grammar, options={}) ->
     ([a,left],cc) ->
       if left < cc[0] then [a ++ [[left,cc[0]-1]], cc[1]+1] else [a, cc[1]+1]
     , [[],min]) |> ([a,left]) -> if left < max then a ++ [[left,max]] else a
-  _'∪' = (...ccs) -> (ccs |> util.flatten).sort( (s,t)->s[0]>t[0] ).reduce(
+  _'∪' = (...ccs) -> (ccs |> util.flatten).sort( (s,t)->+s.0 - +t.0 ).reduce(
     ([...as,a],cc) ->
       switch
         case not a? then [cc]
@@ -259,7 +266,8 @@ export parse = (x, grammar, options={}) ->
         default then [...as,a,cc]
     , [])
   _'∩' = (...ccs) -> _'¬' _'∪' ...(ccs.map _'¬')
-  first_letter = (grammar,node) -->
+  first_letter = ({grammar,avoid_loops=true}:options,node) -->
+    _first_letter = first_letter options
     {func,params:[p, ...ps]} = node
     switch func
       case 'terminal'
@@ -271,44 +279,81 @@ export parse = (x, grammar, options={}) ->
             case p is null                      then [[min,max]]
           ε:[]
       case 'alternative'
-        node.first_letter = p.map(first_letter grammar).reduce (a,b) ->
+        node.first_letter = p.map(_first_letter).reduce (a,b) ->
           x: a.x `_'∪'` b.x
           ε: a.ε `_'∪'` b.ε
         ,{x:[],ε:[]}
       case 'sequence'
         node.first_letter = p.reduce(
           (a,child) ->
-            if a.stop then a else
-              b = first_letter grammar,child
+            if a.stop and avoid_loops then a else
+              b = _first_letter child
               x: a.x `_'∪'` (a.ε `_'∩'` b.x)
               ε: a.ε `_'∩'` b.ε
               stop: b.ε.length == 0
           ,{x:[],ε:[[min,max]]}
         ){x,ε}
       case 'and'
-        a = first_letter grammar,p
+        a = _first_letter p
         node.first_letter =
           x:[]
           ε: a.x `_'∪'` a.ε
       case 'not'
-        a = first_letter grammar,p
+        a = _first_letter p
         node.first_letter =
           x:[]
           ε: _'¬' (a.x `_'∪'` a.ε)
       case 'optional','star'
-        a = first_letter grammar,p
+        a = _first_letter p
         node.first_letter =
           x:a.x
           ε:[[min,max]]
       case 'void','plus'
-        node.first_letter = first_letter grammar,p
+        node.first_letter = _first_letter p
       case 'multipass'
-        first_letter grammar,p[1]
-        node.first_letter = first_letter grammar,p[0]
+        _first_letter p[1]
+        node.first_letter = _first_letter p[0]
       case 'nonterminal'
-        node.first_letter ?= first_letter grammar,grammar[p]
+        node.first_letter ?= _first_letter grammar[p]
   for k of grammar
-    grammar[k].first_letter ? first_letter grammar,grammar[k]
+    grammar[k].first_letter ? first_letter {grammar},grammar[k]
+  for k of grammar
+    first_letter {grammar,-avoid_loops},grammar[k]
+
+  # optimization: regex substitution
+  substitute_with_regex = (node) ->
+    swr = substitute_with_regex
+    {func,params:[p, ...ps]} = node
+    node.regex = switch func
+      case 'nonterminal' then void
+      case 'void' then swr p ; void
+      case 'multipass' then swr p.0 ; swr p.1 ; void
+      case 'terminal'
+        cc_string = (ccs) ->
+          ccs.map((cc) -> "#{cc.0}#{if cc.0 != cc.1 then "-#{cc.1}" else ""}").join('').replace(/]/g, '\\]')
+        switch
+          case util.isString p
+            "(#{['\\\\','\\[','\\|','\\*','\\+','\\?','\\(','\\)','\\.'].reduce ((a,x) -> a.replace new RegExp(x,'g'), x), p})"
+          case util.isArray p and p[0] == '^' then "[^#{cc_string(p.slice(1))}]"
+          case util.isArray p                 then "[#{cc_string(p)}]"
+          case p is null                      then "[^]"
+      case 'alternative'
+        p.forEach (c) -> swr(c)
+        if p.every((c) -> c.regex?) then "(#{p.map((c)->c.regex).join('|')})"
+        else                                then void
+      case 'sequence'
+        p.forEach (c) -> swr(c)
+        if p.every((c) -> c.regex?) then "(#{p.map((c)->c.regex).join('')})"
+        else                                then void
+      case 'and' then (if swr(p)? then "(?=#{p.regex})")
+      case 'not' then (if swr(p)? then "(?!#{p.regex})")
+      case 'optional' then (if swr(p)? then "(#{p.regex}?)")
+      case 'star' then (if swr(p)? then "(#{p.regex}*)")
+      case 'plus' then (if swr(p)? then "(#{p.regex}+)")
+    if node.regex? then node.func = 'regex'
+    node.regex
+  for k of grammar
+    substitute_with_regex grammar[k]
 
   # add synthetic nonterminal to grammar
   grammar._start = {func: 'nonterminal', params: [options.startNT]}
@@ -324,6 +369,7 @@ export parse = (x, grammar, options={}) ->
   ast <- parser.parse(options.stack, options.blocking_rate).then _
   if ast.end != x.length then ast.status = 'fail' ; ast.error = 'did not capture whole input'
   if ast.status == 'fail' then return fulfill ast
+
   # postprocess ast, result is of form {name:'S', children:['adf', {name:'A', children:…}, '[a-z]']}
   pruned = (x, ast) -->
     switch ast.name

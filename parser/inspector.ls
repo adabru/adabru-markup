@@ -117,7 +117,7 @@ stack_trace_screen = (stack_trace, repaint) ->
     stack: []
     showLocal: false
   operator_map =
-    'PACKRAT_NT':'🕮','FIRST_LETTER_NT':'🌔','FIRST_LETTER_ALT':'⎇','T':'T','PASS':'↺','PLUS':'+','STAR':'*','SEQ':'─','OPT':'?','VOID':':','NOT':'!','AND':'&','ALT':'|','NT':''
+    'PACKRAT_NT':'🕮','FIRST_LETTER_NT':'🌔','FIRST_LETTER_ALT':'⎇','REGEX':'R','T':'T','PASS':'↺','PLUS':'+','STAR':'*','SEQ':'─','OPT':'?','VOID':':','NOT':'!','AND':'&','ALT':'|','NT':''
   paint = ->
     s = "#{bold '↑ ↓ → ←'} move in trace #{bold 'l'} toggle locals\n\n"
     symbols = state.stack.map ([f,x,pos,{params},local]) -> if f.name is 'NT' then params.0 else operator_map[f.name]
@@ -141,11 +141,12 @@ stack_trace_screen = (stack_trace, repaint) ->
         u += t.replace /\n/g, inv 'n'
       default
         u = "↘ #{f.3 operator_map[o.0.name]}#{if o.0.name.endsWith 'NT' then f.3 o.3.params.0 else ''}"
-        print_ops = ({func:f,params:p},nt=false) ->
-          precedence = ['PLUS','STAR','OPT','VOID','NOT','AND','SEQ','ALT','FIRST_LETTER_ALT','PASS']
-          switch f.name
+        print_ops = ({func,node},nt=false) ->
+          {params:p} = node
+          precedence = ['REGEX','PLUS','STAR','OPT','VOID','NOT','AND','SEQ','ALT','FIRST_LETTER_ALT','PASS']
+          switch func.name
             case 'NT', 'PACKRAT_NT', 'FIRST_LETTER_NT'
-              if nt then print_ops p.1 else p.0
+              if nt then print_ops(p.1 with node:p.1) else p.0
             case 'T' then (switch
               case util.isString p.0 then "'#{p.0}'"
               case util.isArray p.0
@@ -158,10 +159,13 @@ stack_trace_screen = (stack_trace, repaint) ->
               case p.0 is null then "."
               default then '⚠'
               ).replace /\n/g, inv 'n'
+            case 'REGEX'
+              # ['\\[','\\|','\\*','\\+','\\?','\\('].reduce ((a,x) -> a.replace new RegExp(x,'g'), x), p
+              "#{(f.95 node.regex).replace(/\n/g, inv 'n').replace(/ /g, inv ' ')}"
             case 'STAR','PLUS','VOID','OPT','AND','NOT'
-              c = print_ops p.0
-              if precedence.indexOf(f.name) < precedence.indexOf(p.0.func.name) then c = "(#c)"
-              switch f.name
+              c = print_ops p.0 with node:p.0
+              if precedence.indexOf(func.name) < precedence.indexOf(p.0.func.name) then c = "(#c)"
+              switch func.name
                 case 'STAR' then "#c*"
                 case 'PLUS' then "#c+"
                 case 'VOID' then ":#c"
@@ -169,13 +173,13 @@ stack_trace_screen = (stack_trace, repaint) ->
                 case 'AND' then "&#c"
                 case 'NOT' then "!#c"
             case 'SEQ', 'ALT', 'FIRST_LETTER_ALT', 'PASS'
-              cc = p.0.map (c) -> if precedence.indexOf(f.name) < precedence.indexOf(c.func.name) then "(#{print_ops c})" else print_ops c
-              switch f.name
+              cc = p.0.map (c) -> if precedence.indexOf(func.name) < precedence.indexOf(c.func.name) then "(#{print_ops c with node:c})" else print_ops c with node:c
+              switch func.name
                 case 'SEQ' then cc.join ' '
                 case 'ALT', 'FIRST_LETTER_ALT' then cc.join ' | '
                 case 'PASS' then cc.join ' ↺ '
             default then util.inspect p, {+colors,depth:1}
-        u += "  " + print_ops {func:o.0, params:o.3.params}, o.0.name.endsWith 'NT'
+        u += "  " + print_ops {func:o.0, node:o.3}, o.0.name.endsWith 'NT'
         if state.showLocal then u += "\n#{util.inspect o.4, {+colors}}"
         u
     log s

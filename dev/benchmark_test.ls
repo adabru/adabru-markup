@@ -17,8 +17,7 @@ grammar = require '../html/js/build/ab_markup_grammar.json'
 document = fs.readFileSync (process.argv[2] ? './dev/benchmark_test.data'), 'utf8'
 
 _ =
-  'q' : (a,i) -->
-    b = a.slice!.sort((s,t) -> +s > +t)[Math.round (i/4) * (a.length-1)]
+  'q' : (a,i) --> a.slice!.sort((s,t) -> +s - +t)[Math.round (i/4) * (a.length-1)]
   '∑' : (a) -> a.reduce (a,x) -> a+x
   'μ' : (a) -> (1 / a.length) * _'∑' a
 
@@ -42,9 +41,9 @@ times = []
 pass = (i) ->
   if i<=10
     console.log 'Pass '+i+' of 10...'
-    time1 = new Date!
+    time1 = new Date!.getTime!
     ast <- abpv1.parse(document,grammar).then _
-    time2 = new Date!
+    time2 = new Date!.getTime!
     times.push time2 - time1
     console.log '                       '+boxplot times
     pass i+1
