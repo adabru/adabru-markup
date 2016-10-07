@@ -46,7 +46,7 @@ adabru_v1_parser = new
       if c_ast.status == 'success' then ast.children = [c_ast]
       return ast
 
-  @alternative = !function ALT(x, pos, node, [_call,c_ast,_local], i=0, ast=new Ast '_ALT', pos)
+  @alternative = !function ALT(x, pos, node, [_call,c_ast,_local], [i=0, ast=new Ast '_ALT', pos]=[])
     [children] = node.params
     if not c_ast?
       _call children[i].func, x, pos, children[i]
@@ -59,7 +59,7 @@ adabru_v1_parser = new
           return ast
         case 'fail'
           if i < children.length-1
-            _local i+1, ast
+            _local [i+1, ast]
           else
             ast.status = 'fail'
             return ast
@@ -155,15 +155,15 @@ adabru_v1_parser = new
 
   i = 0
   @parse = (stack, blocking_rate) ~>
-    _call = (func, {x,x_hash}, pos, node) !-> stack.push [func,  {x,x_hash}, pos, node, []]
-    _local = (...s) -> stack[*-1][4] = s
+    _call = (func, {x,x_hash}, pos, node) !-> stack.push [func,  {x,x_hash}, pos, node, void]
+    _local = (s) -> stack[*-1][4] = s
     new Promise (fulfill, reject) ->
       parse_loop = ->
         while i++ < blocking_rate
           if stack[0] instanceof Ast then return fulfill stack[0]
           if stack[*-1] instanceof Ast then ast = stack.pop! else ast = void
           last = stack[*-1]
-          res = last.0 last.1, last.2, last.3, [_call,ast,_local], ...last.4
+          res = last.0 last.1, last.2, last.3, [_call,ast,_local], last.4
           if res? then stack[*-1] = res
         i := 0
         setTimeout parse_loop
