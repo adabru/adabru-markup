@@ -117,7 +117,7 @@ stack_trace_screen = (stack_trace, repaint) ->
     stack: []
     showLocal: false
   operator_map =
-    'PACKRAT_NT':'🕮','FIRST_LETTER_NT':'🌔','T':'T','PASS':'↺','PLUS':'+','STAR':'*','SEQ':'─','OPT':'?','VOID':':','NOT':'!','AND':'&','ALT':'|','NT':''
+    'PACKRAT_NT':'🕮','FIRST_LETTER_NT':'🌔','FIRST_LETTER_ALT':'⎇','T':'T','PASS':'↺','PLUS':'+','STAR':'*','SEQ':'─','OPT':'?','VOID':':','NOT':'!','AND':'&','ALT':'|','NT':''
   paint = ->
     s = "#{bold '↑ ↓ → ←'} move in trace #{bold 'l'} toggle locals\n\n"
     symbols = state.stack.map ([f,x,pos,{params},local]) -> if f.name is 'NT' then params.0 else operator_map[f.name]
@@ -142,7 +142,7 @@ stack_trace_screen = (stack_trace, repaint) ->
       default
         u = "↘ #{f.3 operator_map[o.0.name]}#{if o.0.name.endsWith 'NT' then f.3 o.3.params.0 else ''}"
         print_ops = ({func:f,params:p},nt=false) ->
-          precedence = ['PLUS','STAR','OPT','VOID','NOT','AND','SEQ','ALT','PASS']
+          precedence = ['PLUS','STAR','OPT','VOID','NOT','AND','SEQ','ALT','FIRST_LETTER_ALT','PASS']
           switch f.name
             case 'NT', 'PACKRAT_NT', 'FIRST_LETTER_NT'
               if nt then print_ops p.1 else p.0
@@ -168,11 +168,11 @@ stack_trace_screen = (stack_trace, repaint) ->
                 case 'OPT' then "#c?"
                 case 'AND' then "&#c"
                 case 'NOT' then "!#c"
-            case 'SEQ', 'ALT', 'PASS'
+            case 'SEQ', 'ALT', 'FIRST_LETTER_ALT', 'PASS'
               cc = p.0.map (c) -> if precedence.indexOf(f.name) < precedence.indexOf(c.func.name) then "(#{print_ops c})" else print_ops c
               switch f.name
                 case 'SEQ' then cc.join ' '
-                case 'ALT' then cc.join ' | '
+                case 'ALT', 'FIRST_LETTER_ALT' then cc.join ' | '
                 case 'PASS' then cc.join ' ↺ '
             default then util.inspect p, {+colors,depth:1}
         u += "  " + print_ops {func:o.0, params:o.3.params}, o.0.name.endsWith 'NT'
@@ -182,25 +182,27 @@ stack_trace_screen = (stack_trace, repaint) ->
   onkey = (key) ->
     i = j = state.pos
     stepLeft = ->
-      if j is 0 then return
+      if j is 0 then return false
       j--
       if stack_trace[j] instanceof abpv1.Ast
         k = 1 ; jj = j ; while k > 0 then if stack_trace[--jj] instanceof abpv1.Ast then k++ else k--
         state.stack.push stack_trace[jj]
       else then state.stack.pop!
+      true
     stepRight = ->
-      if j is stack_trace.length - 1 then return
+      if j is stack_trace.length - 1 then return false
       if stack_trace[j] instanceof abpv1.Ast then state.stack.pop! else state.stack.push stack_trace[j]
       j++
+      true
     switch key
       case '\u001b[A'
         sl = state.stack.length
-        if sl > 0 then while sl <= state.stack.length then stepLeft!
+        if sl > 0 then while sl <= state.stack.length and stepLeft! then
       case '\u001b[B'
         if stack_trace[j] instanceof abpv1.Ast then stepRight!
         sl = state.stack.length
         if sl > 2
-          while sl <= state.stack.length then stepRight!
+          while sl <= state.stack.length and stepRight! then
           stepLeft!
       case '\u001b[C' then stepRight!
       case '\u001b[D' then stepLeft!

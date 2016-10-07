@@ -196,9 +196,11 @@ decorate_parser = (parser, {
   memory={},
   first_letter_map=null
 }={}) ->
-  # multipass + optimization{packrat, first_letter}
+  # multipass + optimization{packrat, first_letter_failing, first_letter_routing}
   parser._nonterminal ?= parser.nonterminal
   parser.nonterminal = parser._nonterminal
+  parser._alternative ?= parser.alternative
+  parser.alternative = parser._alternative
   let nt = parser.nonterminal
     parser.nonterminal = !function PACKRAT_NT({x,x_hash}, pos, node, [_call,c_ast])
       [sym, child] = node.params
@@ -210,7 +212,7 @@ decorate_parser = (parser, {
         default then _call nt, {x,x_hash}, pos, node
   let nt = parser.nonterminal
     parser.nonterminal = !function FIRST_LETTER_NT({x,x_hash}, pos, node, [_call,c_ast])
-      [sym, child] = node
+      [sym, child] = node.params
       switch
         case c_ast?
           return c_ast
@@ -218,6 +220,20 @@ decorate_parser = (parser, {
           return new Ast sym,pos,pos,pos+1,'fail'
         default
           _call nt, {x,x_hash}, pos, node
+  let alt = parser.alternative
+    parser.alternative = !function FIRST_LETTER_ALT({x,x_hash}, pos, node, [_call,c_ast])
+      [children] = node.params
+      switch
+        case c_ast?
+          return c_ast
+        default
+          filtered_children = []
+          for c in children then if (c.first_letter.x ++ c.first_letter.ε).some((cc) -> cc[0] <= x.charCodeAt(pos) <= cc[1])
+            filtered_children.push c
+          if filtered_children.length is 0
+            return new Ast '_ALT',pos,pos,pos+1,'fail'
+          else
+            _call alt, {x,x_hash}, pos, {func:alt,params:[filtered_children]}
   parser
 
 export parse = (x, grammar, options={}) ->
@@ -287,6 +303,7 @@ export parse = (x, grammar, options={}) ->
       case 'void','plus'
         node.first_letter = first_letter grammar,p
       case 'multipass'
+        first_letter grammar,p[1]
         node.first_letter = first_letter grammar,p[0]
       case 'nonterminal'
         node.first_letter ?= first_letter grammar,grammar[p]
