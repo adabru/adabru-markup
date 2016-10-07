@@ -3,7 +3,7 @@ React = require 'react'
 {li, div, a, span, ul} = React.DOM
 
 AdabruFiletreeItem = React.createClass do
-  displayName: '_Filetree'
+  displayName: '_FiletreeItem'
   getDefaultProps: ->
     prefix: '/'
     autolink: true

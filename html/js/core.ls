@@ -182,7 +182,7 @@ adabruMarkup =
         })
       case 'Filetree_Item' then {
         file: @printChild(ast, 'Filetree_Item_File')
-        description: @printChild(ast, 'Filetree_Item_Description')
+        description: if (c=@getChild ast, 'Filetree_Item_Description')? then @printChildren c
         children: if (c=@getChild(ast, 'Filetree_Item_Children'))? then c.children.map(@printTree,@) else []
       }
 
