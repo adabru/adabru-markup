@@ -11,6 +11,9 @@ abpv1 = require '../../parser/abpv1.js'
 {AdabruFiletree} = require './filetree.ls'
 {AdabruCodeContainer} = require './code.ls'
 {AdabruSlides} = require './slides.ls'
+{AdabruFactsheet} = require './factsheet.ls'
+if window? then Object.assign window, {React, ReactDOM, abpv1, grammar: ab_markup_grammar
+  ,AdabruPage, AdabruTableofcontents, AdabruArticle, AdabruFiletree, AdabruCodeContainer, AdabruSlides, AdabruFactsheet}
 
 if process.env.BROWSER?
   require '../css/reset.css'
@@ -201,6 +204,11 @@ adabruMarkup =
       case 'Info' then div({className: 'info'},   @printChildren(ast))
       case 'Warning' then div({className: 'warning'},   @printChildren(ast))
 
+      case 'Factsheet' then React.createElement AdabruFactsheet,
+        thing: @printChild ast, 'Factsheet_Thing'
+        facts: if (c=@getChild ast, 'Factsheet_Facts')? then @printChildren c else []
+      case 'Factsheet_Fact' then @printChildren ast 
+
       case 'Paragraph' then p({},   @printChildren(ast))
       case 'Newline' then br({})
 
@@ -249,6 +257,3 @@ Object.assign exports ? this, {
   printDocument: adabruMarkup.printDocument.bind(adabruMarkup)
   parseAndPrint: adabruMarkup.parseAndPrint.bind(adabruMarkup)
 }
-
-if window? then Object.assign window, {React, ReactDOM, abpv1, grammar: ab_markup_grammar
-  ,AdabruPage, AdabruTableofcontents, AdabruArticle, AdabruFiletree, AdabruCodeContainer, AdabruSlides}

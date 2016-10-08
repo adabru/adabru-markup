@@ -1,7 +1,7 @@
 #!/usr/bin/env lsc
 
 require! [http,fs,util,url,path,stream]
-require! [minimist]
+require! [minimist, stylus]
 adabruMarkup = require './core.ls'
 
 log = console.log
@@ -20,34 +20,43 @@ route = (href) ->
   switch
     case p is '/' then request.localpath = docroot ; p = '/.'
     case p is '/adabrumarkup.js' then request.localpath = "#serverroot/build#p" ; request.query.download = true
+    case p.startsWith '/.adabru_markup' then  request.query.download = true ; fallthrough
     default then request.localpath = "#docroot#p"
   {p,lp:request.localpath,q:request.query}
 
 _cache = {}
 cache = (filepath) ->
-  if filepath is /\.js$/
-    fs.createReadStream filepath
-  else
-    # markup
-    s = new stream.Readable {read:(->)}
-    if _cache[filepath]?.timestamp > fs.statSync(filepath).mtime.getTime!
-      s.push _cache[filepath].ast ; s.push null
-    else
-      filecontent = ''
+  switch
+    case filepath is /\.(js|css)$/
       fs.createReadStream filepath
-        ..on 'error', -> s.emit 'error', new Error "error reading file #filepath"
-        ..on 'readable', ->
-          while chunk = @read! then filecontent += chunk
-        ..on 'end', ->
-          start = new Date!.getTime!
-          ast <- adabruMarkup.parseDocument filecontent .then _
-          end = new Date!.getTime!
-          log "\u001b[01m#{path.basename filepath}\u001b[22m parsed in in #{end - start}ms"
-          adabruMarkup.decorateTree ast
-          _cache[filepath] = {ast: JSON.stringify(ast), timestamp: new Date!.getTime!}
-          s.push _cache[filepath].ast
-          s.push null
-    s
+    default
+      s = new stream.Readable {read:(->)}
+      if _cache[filepath]?.timestamp > fs.statSync(filepath).mtime.getTime!
+        s.push _cache[filepath].content ; s.push null
+      else
+        filecontent = ''
+        fs.createReadStream filepath
+          ..on 'error', -> s.emit 'error', new Error "error reading file #filepath"
+          ..on 'readable', ->
+            while chunk = @read! then filecontent += chunk
+          ..on 'end', ->
+            _cache[filepath] = timestamp: new Date!.getTime!
+            switch
+              case filepath is /\.styl$/
+                # stylus
+                (err, css) <- stylus.render filecontent, _
+                console.log err
+                if err? then s.emit 'error', err
+                s.push _cache[filepath].content = css ; s.push null
+              default
+                # markup
+                start = new Date!.getTime!
+                ast <- adabruMarkup.parseDocument filecontent .then _
+                end = new Date!.getTime!
+                log "\u001b[01m#{path.basename filepath}\u001b[22m parsed in in #{end - start}ms"
+                adabruMarkup.decorateTree ast
+                s.push _cache[filepath].content = JSON.stringify ast ; s.push null
+      s
 
 server = http.createServer (req, res) ->
   {p,lp,q} = route req.url
@@ -66,13 +75,18 @@ server = http.createServer (req, res) ->
     case stats.isFile! and q.download?
       cache lp
         ..on 'error', -> res.writeHead 404 ; res.end!
-        ..on 'open', -> res.writeHead 200, {'Content-Type': 'application/javascript; charset=utf-8'}
+        ..on 'open', ->
+          contenttypes = {'.js':'application/javascript', '.css':'text/css'}
+          res.writeHead 200, {'Content-Type': "#{contenttypes[path.extname lp]}; charset=utf-8"}
         ..pipe res
     case stats.isFile!
       res.writeHead 200, {'Content-Type': 'text/html; charset=utf-8'}
       s = """
+        <head>
+          <script src=\"/adabrumarkup.js\"></script>
+          <link rel="stylesheet" type="text/css" href="/.adabru_markup/style.styl" />
+        </head>
         <div id='app'>
-        <script src=\"/adabrumarkup.js\"></script>
         <script>
           var filepath = '#p?download'
           fetch(filepath, {method: 'get'}).then( r => r.text() ).then( data => {

@@ -31,7 +31,8 @@
     "highlight.js": "^9.2.0",
     "lodash": "^4.8.2",
     "react": "^15",
-    "react-dom": "^15"
+    "react-dom": "^15",
+    "stylus": "^0.54.5"
   },
   "devDependencies": {
     "coffee-loader": "^0.7.2",

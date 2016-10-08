@@ -69,7 +69,7 @@ span.terminal {
   background-color: #300a24;
   color: #ffffff;
   font-family: monospace;
-  font-size: .8em;
+  font-size: .7em;
   padding: .2em;
 }
 span.terminal::before {
