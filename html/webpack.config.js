@@ -10,6 +10,7 @@ module.exports = {
       ,{test: /\.json$/, loader: 'json'}
       ,{test: /\.css$/, loader: "style-loader!css-loader"}
       ,{test: /\.ls$/, loader: "livescript"}
+      ,{test: /\.styl$/, loader: "style-loader!css-loader!stylus-loader"}
     ]
   },
   output: {

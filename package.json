@@ -45,6 +45,7 @@
     "livescript-loader": "^0.1.5",
     "node-inspector": "^0.12.8",
     "style-loader": "^0.13.1",
+    "stylus-loader": "^2.3.1",
     "webpack": "^1.12.15",
     "webpack-sources": "^0.1.2"
   }

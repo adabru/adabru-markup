@@ -45,7 +45,6 @@ cache = (filepath) ->
               case filepath is /\.styl$/
                 # stylus
                 (err, css) <- stylus.render filecontent, _
-                console.log err
                 if err? then s.emit 'error', err
                 s.push _cache[filepath].content = css ; s.push null
               default
@@ -73,11 +72,10 @@ server = http.createServer (req, res) ->
       s = files.map((f)->if fs.statSync("#lp/#f").isDirectory! then "<a href='#p/#f'>#f/</a></br>" else "<a href='#p/#f'>#f</a></br>").join ''
       res.end s
     case stats.isFile! and q.download?
+      contenttypes = {'.js':'application/javascript', '.css':'text/css', '.styl':'text/css'}
+      res.writeHead 200, {'Content-Type': "#{contenttypes[path.extname lp]}; charset=utf-8"}
       cache lp
         ..on 'error', -> res.writeHead 404 ; res.end!
-        ..on 'open', ->
-          contenttypes = {'.js':'application/javascript', '.css':'text/css'}
-          res.writeHead 200, {'Content-Type': "#{contenttypes[path.extname lp]}; charset=utf-8"}
         ..pipe res
     case stats.isFile!
       res.writeHead 200, {'Content-Type': 'text/html; charset=utf-8'}

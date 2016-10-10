@@ -18,7 +18,7 @@ if window? then Object.assign window, {React, ReactDOM, abpv1, grammar: ab_marku
 if process.env.BROWSER?
   require '../css/reset.css'
   require '../css/core.css'
-  require '../css/block.css'
+  require '../css/block.styl'
   require '../css/span.css'
 
 AdabruPage = React.createClass do
@@ -190,7 +190,7 @@ adabruMarkup =
       }
 
       case 'List_Ordered' then ol({}, @printChildren(ast))
-      case 'List_Unordered' then ul({},   @printChildren(ast))
+      case 'List_Unordered' then ul className:'ul',   @printChildren(ast)
       case 'List_Item' then li({},   @printChildren(ast))
       case 'List_Item_Paragraph' then p({},   @printChildren(ast))
 
@@ -207,7 +207,7 @@ adabruMarkup =
       case 'Factsheet' then React.createElement AdabruFactsheet,
         thing: @printChild ast, 'Factsheet_Thing'
         facts: if (c=@getChild ast, 'Factsheet_Facts')? then @printChildren c else []
-      case 'Factsheet_Fact' then @printChildren ast 
+      case 'Factsheet_Fact' then @printChildren ast
 
       case 'Paragraph' then p({},   @printChildren(ast))
       case 'Newline' then br({})

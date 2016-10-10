@@ -5,7 +5,7 @@ require '@pleasetrythisathome/react.animate'
 _ = require 'lodash'
 
 if process.env.BROWSER?
-  require '../css/toc.css'
+  require '../css/toc.styl'
 
 
 AdabruTableofcontents = React.createClass do
