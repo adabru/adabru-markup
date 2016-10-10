@@ -3,8 +3,8 @@ ReactDOM = require 'react-dom'
 ReactDOMServer = require 'react-dom/server'
 ab_markup_grammar = require './build/ab_markup_grammar.json'
 abpv1 = require '../../parser/abpv1.js'
-#
-#
+
+
 {span, nav, li, a, ol, ul, h1, h2, h3, p, div, br, strong, em, code, kbd, img, table, tbody, tr, th, td, iframe} = React.DOM
 
 {AdabruTableofcontents, AdabruArticle} = require './toc.ls'
@@ -12,14 +12,14 @@ abpv1 = require '../../parser/abpv1.js'
 {AdabruCodeContainer} = require './code.ls'
 {AdabruSlides} = require './slides.ls'
 {AdabruFactsheet} = require './factsheet.ls'
+{AdabruFit} = require './span.ls'
 if window? then Object.assign window, {React, ReactDOM, abpv1, grammar: ab_markup_grammar
-  ,AdabruPage, AdabruTableofcontents, AdabruArticle, AdabruFiletree, AdabruCodeContainer, AdabruSlides, AdabruFactsheet}
+  ,AdabruPage, AdabruTableofcontents, AdabruArticle, AdabruFiletree, AdabruCodeContainer, AdabruSlides, AdabruFactsheet, AdabruFit}
 
 if process.env.BROWSER?
   require '../css/reset.css'
   require '../css/core.css'
   require '../css/block.styl'
-  require '../css/span.css'
 
 AdabruPage = React.createClass do
   displayName: '_Page'
@@ -236,9 +236,12 @@ adabruMarkup =
       case 'Keystroke' then kbd({},   @printChildren(ast))
       case 'Key' then span({className: 'keystroke'}, ast.children[0])
       case 'Brand' then span({className: 'brand'}, ast.children[0])
-      case 'Path' then span({className: 'path'}, ast.children[0])
+      case 'Path' then span className: 'path', @printChildren ast
       case 'Code' then code({}, ast.children[0])
       case 'Terminal' then span({className: 'terminal'}, ast.children[0])
+      case 'Fit' then React.createElement AdabruFit,
+        children: @printChildren ast
+      case 'Fit_Item' then span className: 'fititem', @printChildren ast
       case 'Iframe' then iframe({
         src: ast.children.join('')
         onLoad: (e) ->

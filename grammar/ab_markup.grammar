@@ -48,8 +48,8 @@ Table ← ((:'|'+ :'\n') | Table_Header) (:[ |-]* :'\n')? Table_Body
 Table_Header ← (:'|' Table_Header_Item)+ :'\n'
 Table_Header_Item ← (!('|'|'\n') Span)*
 Table_Body ← Table_Body_Row*
-Table_Body_Row ← !'\n' :'|'? Table_Body_Row_Item (:'|' Table_Body_Row_Item)* :'\n'
-Table_Body_Row_Item ← (!('|'|'\n') Span)*
+Table_Body_Row ← !'\n' :'|'? :' '? Table_Body_Row_Item (:'|' :' '? Table_Body_Row_Item)* :'\n'
+Table_Body_Row_Item ← [^\n|]* (('\n'+ :'  ') [^\n]*)* ↺ (:'\n' | Block)*
 
 Info ← (:'ℹ ' Block) | (:'ℹ\n' (!'\n\n' (:'\n' | Block))*)
 Warning ← :'⚠ ' Block
@@ -66,7 +66,7 @@ Invalid_Block ← ( (!'\n' .)+ '\n')+
 
 ### Span Elements
 
-Span ↖ Hover | Link | Emphasis | Image | Technical | Info_Span | Warning_Span | Iframe | Brand | .
+Span ↖ Hover | Link | Emphasis | Image | Technical | Info_Span | Warning_Span | Iframe | Fit | Brand | .
 
 Hover ← :'[' Hover_Content :']((' Link_Url :'))'
 Hover_Content ← (!']' Span)+
@@ -90,7 +90,7 @@ Technical ↖ Apielement | Keystroke | Path | Code | Terminal
 Apielement ← :'@' [^ \n]+
 Keystroke ← :'⌨' (Key :' '?)+
 Key ← [^  \n]+
-Path ← :'↑' [^ \n]+
+Path ← :'↑' (![ \n] Span)+
 Code ← :'`' [^`\n]+ :'`'
 Terminal ← :'└▪' [^↵\n]+ :'↵'
 
@@ -100,3 +100,6 @@ Brand ← [a-zA-Z0-9 ]+ :'™'
 
 Info_Span ← :'ℹ' ![ \n] (!'\n' Span)+
 Warning_Span ← :'⚠' ![ \n] (!'\n' Span)+
+
+Fit ← :'↤' (Fit_Item | ![\n↦] Span)+ :'↦'
+Fit_Item ← :'⭲' (![\n⭰] Span)+ :'⭰'
