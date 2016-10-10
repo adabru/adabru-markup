@@ -321,9 +321,19 @@ export parse = (x, grammar, options={}) ->
     first_letter {grammar,-avoid_loops},grammar[k]
 
   # optimization: regex substitution
-  substitute_with_regex = (node) ->
-    swr = substitute_with_regex
+  substitute_with_regex = (parent_precedence, node) -->
+    precedence = ['terminal' 'star' 'plus' 'optional' 'sequence' 'alternative' 'and' 'not']
     {func,params:[p, ...ps]} = node
+    swr = substitute_with_regex (precedence.indexOf(func) ? 0)
+    child_regex = ((this_func, child) -->
+      _child_func = child.func
+      if swr(child)?
+        r = child.regex
+        if precedence.indexOf(func) < precedence.indexOf(if _child_func is 'terminal' and util.isString child.params.0 and child.params.0.length > 0 then 'sequence' else _child_func)
+          r = "(#r)"
+        r
+    ) func
+    node.precedence = precedence.indexOf func
     node.regex = switch func
       case 'nonterminal' then void
       case 'void' then swr p ; void
@@ -333,27 +343,27 @@ export parse = (x, grammar, options={}) ->
           ccs.map((cc) -> "#{cc.0}#{if cc.0 != cc.1 then "-#{cc.1}" else ""}").join('').replace(/]/g, '\\]')
         switch
           case util.isString p
-            "(#{['\\\\','\\[','\\|','\\*','\\+','\\?','\\(','\\)','\\.'].reduce ((a,x) -> a.replace new RegExp(x,'g'), x), p})"
+            ['\\\\','\\[','\\|','\\*','\\+','\\?','\\(','\\)','\\.'].reduce ((a,x) -> a.replace new RegExp(x,'g'), x), p
           case util.isArray p and p[0] == '^' then "[^#{cc_string(p.slice(1))}]"
           case util.isArray p                 then "[#{cc_string(p)}]"
           case p is null                      then "[^]"
       case 'alternative'
-        p.forEach (c) -> swr(c)
-        if p.every((c) -> c.regex?) then "(#{p.map((c)->c.regex).join('|')})"
-        else                                then void
+        children = p.map (c) -> child_regex c
+        if children.every((c) -> c?) then children.join('|')
+        else                         then void
       case 'sequence'
-        p.forEach (c) -> swr(c)
-        if p.every((c) -> c.regex?) then "(#{p.map((c)->c.regex).join('')})"
-        else                                then void
-      case 'and' then (if swr(p)? then "(?=#{p.regex})")
-      case 'not' then (if swr(p)? then "(?!#{p.regex})")
-      case 'optional' then (if swr(p)? then "(#{p.regex}?)")
-      case 'star' then (if swr(p)? then "(#{p.regex}*)")
-      case 'plus' then (if swr(p)? then "(#{p.regex}+)")
+        children = p.map (c) -> child_regex c
+        if children.every((c) -> c?) then children.join('')
+        else void
+      case 'and' then (if (s=child_regex p)? then "(?=#s)")
+      case 'not' then (if (s=child_regex p)? then "(?!#s)")
+      case 'optional' then (if (s=child_regex p)? then "#s?")
+      case 'star' then (if (s=child_regex p)? then "#s*")
+      case 'plus' then (if (s=child_regex p)? then "#s+")
     if node.regex? then node.func = 'regex'
     node.regex
   for k of grammar
-    substitute_with_regex grammar[k]
+    substitute_with_regex 0,grammar[k]
 
   # add synthetic nonterminal to grammar
   grammar._start = {func: 'nonterminal', params: [options.startNT]}

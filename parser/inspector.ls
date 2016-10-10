@@ -211,6 +211,15 @@ stack_trace_screen = (stack_trace, repaint) ->
       case '\u001b[C' then stepRight!
       case '\u001b[D' then stepLeft!
       case 'l' then != state.showLocal ; return repaint!
+      case '\u001b[5~'
+        sl = state.stack.length ; i = 1
+        stepLeft! ; while sl != state.stack.length and stepLeft! then i++
+        if sl != state.stack.length then while i-- > 0 then stepRight!
+      case '\u001b[6~'
+        sl = state.stack.length ; i = 1
+        stepRight! ; while sl != state.stack.length and stepRight! then i++
+        if sl != state.stack.length then while i-- > 0 then stepLeft!
+
     if i != j
       state.pos = j ; repaint!
   {paint, onkey}
