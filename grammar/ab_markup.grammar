@@ -44,7 +44,7 @@ List_Item ← (('\n'+ :'  ')? [^\n])+
           ↺ (:'\n' | (Slides | Header | Blockquote | Codeblock | Linknote | List | Table | List_Item_Paragraph | Invalid_Block) )+
 List_Item_Paragraph ← ( !('\n\n' | '\n- ') '\n'? (!'\n' (Newline|Span))+ )+
 
-Table ← ((:'|'+ :'\n') | Table_Header) (:[ |-]* :'\n')? Table_Body
+Table ← Table_Header (:[ |-]* :'\n')? Table_Body
 Table_Header ← (:'|' Table_Header_Item)+ :'\n'
 Table_Header_Item ← (!('|'|'\n') Span)*
 Table_Body ← Table_Body_Row*

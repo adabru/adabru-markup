@@ -22,6 +22,13 @@ colors = (->
   [inv,pos] = [esc('07','27'),esc('27','07')]
   [bold,dim,reset] = [esc('01',22),esc('02',22),esc('00','00')]
   {f,b,inv,pos,bold,dim,reset})!
+ellipsis = (s,l=10,r=15,e='…') ->
+  {f} = colors
+  m = Math.round l/2
+  if s.length < r then s else "#{s.substr 0,m}#e#{s.substr -m,m}"
+replace = (s, dic=[]) ->
+  {inv,dim} = colors
+  dic.reduce ((a,x) -> a.replace x.0, x.1), s
 error = (s) ->
   console.log '\u001b[1m\u001b[31m'+s+'\u001b[39m\u001b[0m'
 log = console.log
@@ -29,11 +36,12 @@ write = (s) -> process.stdout.write s
 todo = (s) ->
   console.log '\u001b[33mTODO: '+s+'\u001b[39m'
 
+
 abpv1 = require './abpv1.js'
 
 memory_screen = (memory, x, repaint) ->
   x_hash = ''+util.hash x
-  {f,inv,bold} = colors
+  {f,inv,bold,dim} = colors
   line_lengths = (x.split '\n').map (s)->s.length
   line_and_col = (pos) ->
     for len,i in line_lengths
@@ -41,13 +49,8 @@ memory_screen = (memory, x, repaint) ->
   short_print = (ast, x, indent=0) ->
     s = ' '.repeat indent
     s += "#{ast.name} #{if ast.status == 'success' then '✔' else '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} "
-    t = x.substring ast.start, ast.end
-    t = if t.length < 60 then "#{f.2 t}" else "#{f.2 t.substr 0,25}…#{f.2 t.substr -25,25}"
-    s += t.replace /\n/g, inv 'n'
-    s += ""
-    t = x.substring ast.end, ast.lookAhead
-    t = if t.length < 20 then "#{f.3 t}" else "#{f.3 t.substr 0,8}…#{f.3 t.substr -8,8}"
-    s += t.replace /\n/g, inv 'n'
+    s += x.substring ast.start, ast.end |>ellipsis _,50,60 |>f.2 |>replace _, [[/\n/g inv 'n'] [/ /g dim '·']]
+    s += x.substring ast.end, ast.lookAhead |>ellipsis _,20,16 |>f.3 |>replace _, [[/\n/g inv 'n'] [/ /g dim '·']]
     log s
     if ast.status == 'fail' then for c in ast.children
       short_print c, x, indent+1
@@ -97,9 +100,9 @@ memory_screen = (memory, x, repaint) ->
         .filter((k) -> k.startsWith(state.hash) && k != state.hash)
         .map((k) -> k.substr(state.hash.length).match(/([^,]+),([^:]+)/)[1,2])
         .filter((k) -> +k.0 == j)
-        s = "#{bold j}: line #{bold l}, col #{bold c} #{f.2 x.slice j-4>?0, j}#{f.2 bold x[j]}#{f.2 x.substr j+1, 4}"
+        s = "#{bold j}: line #{bold l}, col #{bold c} #{f.2 x.slice j-24>?0, j}#{f.2 bold x[j]}#{f.2 x.substr j+1, 24}"
         s += "#{if stepDown.length>0 then " [↓ #{stepDown.0.0}:#{stepDown.0.1}#{if stepDown.length>1 then ", …#{stepDown.length - 1}" else ''}]" else ''}"
-        log s.replace /\n/g, inv 'n'
+        log replace s, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
         if memory[state.hash][j]? then for nt of memory[state.hash][j] then short_print memory[state.hash][j][nt], x
   {onkey, paint}
 
@@ -111,7 +114,7 @@ stack_screen = (stack) ->
   onkey: ->
 
 stack_trace_screen = (stack_trace, repaint) ->
-  {f,inv,bold} = colors
+  {f,inv,bold,dim} = colors
   state =
     pos: 0
     stack: []
@@ -119,28 +122,28 @@ stack_trace_screen = (stack_trace, repaint) ->
   operator_map =
     'PACKRAT_NT':'🕮','FIRST_LETTER_NT':'🌔','FIRST_LETTER_ALT':'⎇','REGEX':'R','T':'T','PASS':'↺','PLUS':'+','STAR':'*','SEQ':'─','OPT':'?','VOID':':','NOT':'!','AND':'&','ALT':'|','NT':''
   paint = ->
-    s = "#{bold '↑ ↓ → ←'} move in trace #{bold 'l'} toggle locals\n\n"
-    symbols = state.stack.map ([f,x,pos,{params},local]) -> if f.name is 'NT' then params.0 else operator_map[f.name]
-    last_symbol = symbols.pop!
+    s = "#{bold '↑ ↓ → ← home end pg+ pg-'} move in trace #{bold 'l'} toggle locals\n\n"
     o = stack_trace[state.pos]
-    s += "↘ "+symbols.join ' '
+    if state.showLocal and not (o instanceof abpv1.Ast)
+      log "\n#{util.inspect o.4, {+colors,depth:1}}"
+      return
+    symbols = if state.stack.length is 0 then [''] else
+      state.stack.map ([f,x,pos,{params},local]) -> if f.name is 'NT' then params.0 else operator_map[f.name]
+    last_symbol = symbols.pop!
+    s += "#{state.pos}/#{stack_trace.length} "+symbols.join ' '
     s += ' ' + switch
-      case not (o instanceof abpv1.Ast) then last_symbol
+      case not (o instanceof abpv1.Ast)
+        next_symbol = if o.0.name.endsWith 'NT' then o.3.params.0 else operator_map[o.0.name]
+        "#last_symbol #{f.3 next_symbol}"
       case o.status == 'fail' then f.1 last_symbol
       case o.status == 'success' then f.2 last_symbol
       default then '⚠'
-    s += '\n' + switch
+    s += '\n\n' + switch
       case (ast=o) instanceof abpv1.Ast
-        u = "#{if ast.status == 'success' then f.2 '✔' else f.1 '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} "
-        t = state.stack[*-1].1.x.substring ast.start, ast.end
-        t = if t.length < 60 then "#{f.2 t}" else "#{f.2 t.substr 0,25}…#{f.2 t.substr -25,25}"
-        u += t.replace /\n/g, inv 'n'
-        u += ""
-        t = state.stack[*-1].1.x.substring ast.end, ast.lookAhead
-        t = if t.length < 20 then "#{f.3 t}" else "#{f.3 t.substr 0,8}…#{f.3 t.substr -8,8}"
-        u += t.replace /\n/g, inv 'n'
+        u = "#{if ast.status == 'success' then f.2 '✔' else f.1 '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} \n"
+        u += state.stack[*-1].1.x.substring ast.start, ast.end |> ellipsis _, 100, 120  |>f.2|> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
+        u += state.stack[*-1].1.x.substring ast.end, ast.lookAhead |> ellipsis _, 50, 60  |>f.3|> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
       default
-        u = "↘ #{f.3 operator_map[o.0.name]}#{if o.0.name.endsWith 'NT' then f.3 o.3.params.0 else ''}"
         print_ops = ({func,node},nt=false) ->
           {params:p} = node
           precedence = ['REGEX','PLUS','STAR','OPT','VOID','NOT','AND','SEQ','ALT','FIRST_LETTER_ALT','PASS']
@@ -179,9 +182,7 @@ stack_trace_screen = (stack_trace, repaint) ->
                 case 'ALT', 'FIRST_LETTER_ALT' then cc.join ' | '
                 case 'PASS' then cc.join ' ↺ '
             default then util.inspect p, {+colors,depth:1}
-        u += "  " + print_ops {func:o.0, node:o.3}, o.0.name.endsWith 'NT'
-        if state.showLocal then u += "\n#{util.inspect o.4, {+colors}}"
-        u
+        print_ops {func:o.0, node:o.3}, o.0.name.endsWith 'NT'
     log s
   onkey = (key) ->
     i = j = state.pos
@@ -219,7 +220,10 @@ stack_trace_screen = (stack_trace, repaint) ->
         sl = state.stack.length ; i = 1
         stepRight! ; while sl != state.stack.length and stepRight! then i++
         if sl != state.stack.length then while i-- > 0 then stepLeft!
-
+      case '\u001b[H'
+        while stepLeft! then
+      case '\u001b[F'
+        while stepRight! then
     if i != j
       state.pos = j ; repaint!
   {paint, onkey}
