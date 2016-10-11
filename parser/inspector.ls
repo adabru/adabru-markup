@@ -39,7 +39,7 @@ todo = (s) ->
 
 abpv1 = require './abpv1.js'
 
-memory_screen = (memory, x, repaint) ->
+memory_screen = ({memory, x, cursor}, repaint) ->
   x_hash = ''+util.hash x
   {f,inv,bold,dim} = colors
   line_lengths = (x.split '\n').map (s)->s.length
@@ -54,28 +54,28 @@ memory_screen = (memory, x, repaint) ->
     log s
     if ast.status == 'fail' then for c in ast.children
       short_print c, x, indent+1
-  state = {pos: {"#{x_hash}":0, '':0}, hash:x_hash}
+  cursor ?= {pos: {"#{x_hash}":0, '':0}, hash:x_hash}
   onkey = (d) ->
-    i = j = state.pos[state.hash]
-    switch (state.hash.match(/([^:]+)/g) || []).length
+    i = j = cursor.pos[cursor.hash]
+    switch (cursor.hash.match(/([^:]+)/g) || []).length
       case 0
         hashes = Object.keys(memory).filter((k)->k.startsWith x_hash)
         switch d
-          case '\u001b[B' then state.hash = hashes[j] ; return onkey ''
+          case '\u001b[B' then cursor.hash = hashes[j] ; return onkey ''
           case '\u001b[C' then j++
           case '\u001b[D' then j--
         j = (j >? 0) <? hashes.length-1
         if d == '' or i != j
-          state.pos[state.hash] = j
+          cursor.pos[cursor.hash] = j
           repaint!
       default
         switch d
           case '\u001b[A'
-            matches = state.hash.match /^(.+),[^,:]+,[^,:]+:[^:]+$|()/
-            state.hash = matches[1] || matches[2] ; print state.hash ; return onkey ''
+            matches = cursor.hash.match /^(.+),[^,:]+,[^,:]+:[^:]+$|()/
+            cursor.hash = matches[1] || matches[2] ; print cursor.hash ; return onkey ''
           case '\u001b[B'
-            sub_hashes = Object.keys(memory).filter((k) -> k.startsWith(state.hash) && k != state.hash && +(k.substr(state.hash.length+1).match(/^([^,]+),/)[1]) == j)
-            if sub_hashes.length > 0 then state.hash = sub_hashes.0
+            sub_hashes = Object.keys(memory).filter((k) -> k.startsWith(cursor.hash) && k != cursor.hash && +(k.substr(cursor.hash.length+1).match(/^([^,]+),/)[1]) == j)
+            if sub_hashes.length > 0 then cursor.hash = sub_hashes.0
             return onkey ''
           case '\u001b[C' then j++
           case '\u001b[D' then j--
@@ -83,27 +83,29 @@ memory_screen = (memory, x, repaint) ->
           case '\u007f'
             s = ''+j
             j = if s.length<=1 then 0 else 0 .|. s.substr 0, s.length-1
-        x = memory[state.hash].x
+        x = memory[cursor.hash].x
         j = (j >? 0) <? x.length-1
         if d == '' or i != j
-          state.pos[state.hash] = j
+          cursor.pos[cursor.hash] = j
           repaint!
   paint = ->
     log "#{bold '0-9 ← → BS'} move to character #{bold '↓ ↑'} change buffer\n"
-    if (state.hash.match(/([^:]+)/g) || []).length is 0
-      let j = state.pos[state.hash]
+    if (cursor.hash.match(/([^:]+)/g) || []).length is 0
+      let j = cursor.pos[cursor.hash]
         hashes = Object.keys(memory).filter((k)->k.startsWith x_hash)
         log hashes.map((k,i)->if i == j then bold k else k).join('\n')
     else
-      let j = state.pos[state.hash] then let [l,c] = line_and_col j, x = memory[state.hash].x
+      let j = cursor.pos[cursor.hash] then let [l,c] = line_and_col j, x = memory[cursor.hash].x
         stepDown = Object.keys(memory)
-        .filter((k) -> k.startsWith(state.hash) && k != state.hash)
-        .map((k) -> k.substr(state.hash.length).match(/([^,]+),([^:]+)/)[1,2])
+        .filter((k) -> k.startsWith(cursor.hash) && k != cursor.hash)
+        .map((k) -> k.substr(cursor.hash.length).match(/([^,]+),([^:]+)/)[1,2])
         .filter((k) -> +k.0 == j)
-        s = "#{bold j}: line #{bold l}, col #{bold c} #{f.2 x.slice j-24>?0, j}#{f.2 bold x[j]}#{f.2 x.substr j+1, 24}"
+        s = "#{bold j}/#{x.length}: line #{bold l}, col #{bold c}"
         s += "#{if stepDown.length>0 then " [↓ #{stepDown.0.0}:#{stepDown.0.1}#{if stepDown.length>1 then ", …#{stepDown.length - 1}" else ''}]" else ''}"
-        log replace s, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
-        if memory[state.hash][j]? then for nt of memory[state.hash][j] then short_print memory[state.hash][j][nt], x
+        s += "\n"
+        s += "#{f.2 x.slice j-24>?0, j}#{f.2 bold x[j]}#{f.2 x.substr j+1, 24}" |>replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
+        log s
+        if memory[cursor.hash][j]? then for nt of memory[cursor.hash][j] then short_print memory[cursor.hash][j][nt], x
   {onkey, paint}
 
 stack_screen = (stack) ->
@@ -113,37 +115,44 @@ stack_screen = (stack) ->
     print stack[*-1],1
   onkey: ->
 
-stack_trace_screen = (stack_trace, repaint) ->
+stack_trace_screen = ({stack_trace, cursor}, repaint) ->
   {f,inv,bold,dim} = colors
   state =
-    pos: 0
-    stack: []
     showLocal: false
   operator_map =
     'PACKRAT_NT':'🕮','FIRST_LETTER_NT':'🌔','FIRST_LETTER_ALT':'⎇','REGEX':'R','T':'T','PASS':'↺','PLUS':'+','STAR':'*','SEQ':'─','OPT':'?','VOID':':','NOT':'!','AND':'&','ALT':'|','NT':''
   paint = ->
     s = "#{bold '↑ ↓ → ← home end pg+ pg-'} move in trace #{bold 'l'} toggle locals\n\n"
-    o = stack_trace[state.pos]
-    if state.showLocal and not (o instanceof abpv1.Ast)
-      log "\n#{util.inspect o.4, {+colors,depth:1}}"
+    if (o=stack_trace[cursor.pos]) instanceof abpv1.Ast
+      ast = o
+      [func,{x,x_hash},pos,node,local] = cursor.stack[*-1]
+    else
+      [func,{x,x_hash},pos,node,local] = o
+    if state.showLocal and not ast?
+      log "\n#{util.inspect local, {+colors,depth:1}}"
       return
-    symbols = if state.stack.length is 0 then [''] else
-      state.stack.map ([f,x,pos,{params},local]) -> if f.name is 'NT' then params.0 else operator_map[f.name]
-    last_symbol = symbols.pop!
-    s += "#{state.pos}/#{stack_trace.length} "+symbols.join ' '
-    s += ' ' + switch
-      case not (o instanceof abpv1.Ast)
-        next_symbol = if o.0.name.endsWith 'NT' then o.3.params.0 else operator_map[o.0.name]
-        "#last_symbol #{f.3 next_symbol}"
-      case o.status == 'fail' then f.1 last_symbol
-      case o.status == 'success' then f.2 last_symbol
-      default then '⚠'
-    s += '\n\n' + switch
-      case (ast=o) instanceof abpv1.Ast
-        u = "#{if ast.status == 'success' then f.2 '✔' else f.1 '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} \n"
-        u += state.stack[*-1].1.x.substring ast.start, ast.end |> ellipsis _, 100, 120  |>f.2|> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
-        u += state.stack[*-1].1.x.substring ast.end, ast.lookAhead |> ellipsis _, 50, 60  |>f.3|> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
-      default
+    symbols = cursor.stack.map ([f,x,pos,{params},local]) -> if f.name is 'NT' then params.0 else operator_map[f.name]
+    # 13/16763 0/880 🌔 🕮 Document ─ ? 🌔 🕮 Tableofcontents : R
+    s += "#{cursor.pos}/#{stack_trace.length} #pos/#{x.length} "
+    switch ast?
+      case true
+        last_symbol = symbols.pop!
+        s += "#{symbols.join ' '} "
+        s += {'fail': f.1, 'success': f.2}[ast.status] last_symbol
+      case false
+        next_symbol = if func.name.endsWith 'NT' then node.params.0 else operator_map[func.name]
+        s += "#{symbols.join ' '} #{f.3 next_symbol}"
+    s += '\n\n'
+    switch ast?
+      case true
+        # ✔ 0 5 880 [TOC]n…
+        s += "#{if ast.status == 'success' then f.2 '✔' else f.1 '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} \n\n"
+        s += x.substring 0, ast.start |> ellipsis _, 50, 60  |> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
+        s += x.substring ast.start, ast.end |> ellipsis _, 100, 120  |>f.2|> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
+        s += x.substring ast.end, ast.lookAhead |> ellipsis _, 50, 60  |>f.3|> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
+        s += x.substring ast.lookAhead |> ellipsis _, 50, 60  |> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
+      case false
+        # (:n | Block)*
         print_ops = ({func,node},nt=false) ->
           {params:p} = node
           precedence = ['REGEX','PLUS','STAR','OPT','VOID','NOT','AND','SEQ','ALT','FIRST_LETTER_ALT','PASS']
@@ -163,8 +172,7 @@ stack_trace_screen = (stack_trace, repaint) ->
               default then '⚠'
               ).replace /\n/g, inv 'n'
             case 'REGEX'
-              # ['\\[','\\|','\\*','\\+','\\?','\\('].reduce ((a,x) -> a.replace new RegExp(x,'g'), x), p
-              "#{(f.95 node.regex).replace(/\n/g, inv 'n').replace(/ /g, inv ' ')}"
+              node.regex |>f.95 |>replace _, [[/\n/g inv 'n'] [/ /g dim '·']]
             case 'STAR','PLUS','VOID','OPT','AND','NOT'
               c = print_ops p.0 with node:p.0
               if precedence.indexOf(func.name) < precedence.indexOf(p.0.func.name) then c = "(#c)"
@@ -179,53 +187,58 @@ stack_trace_screen = (stack_trace, repaint) ->
               cc = p.0.map (c) -> if precedence.indexOf(func.name) < precedence.indexOf(c.func.name) then "(#{print_ops c with node:c})" else print_ops c with node:c
               switch func.name
                 case 'SEQ' then cc.join ' '
-                case 'ALT', 'FIRST_LETTER_ALT' then cc.join ' | '
+                case 'ALT', 'FIRST_LETTER_ALT' then cc.join ' | 'operator_map
                 case 'PASS' then cc.join ' ↺ '
             default then util.inspect p, {+colors,depth:1}
-        print_ops {func:o.0, node:o.3}, o.0.name.endsWith 'NT'
+        s += print_ops {func, node}, func.name.endsWith 'NT'
+        # [TOC]…
+        s += '\n\n'
+        s += x.substring 0, pos |>ellipsis _, 50, 60  |>replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
+        s += x.substring pos, pos+1 |>replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']] |>f.2 |>bold
+        s += x.substring pos+1, x.length |> ellipsis _, 50, 60  |> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
     log s
   onkey = (key) ->
-    i = j = state.pos
+    i = j = cursor.pos
     stepLeft = ->
       if j is 0 then return false
       j--
       if stack_trace[j] instanceof abpv1.Ast
         k = 1 ; jj = j ; while k > 0 then if stack_trace[--jj] instanceof abpv1.Ast then k++ else k--
-        state.stack.push stack_trace[jj]
-      else then state.stack.pop!
+        cursor.stack.push stack_trace[jj]
+      else then cursor.stack.pop!
       true
     stepRight = ->
       if j is stack_trace.length - 1 then return false
-      if stack_trace[j] instanceof abpv1.Ast then state.stack.pop! else state.stack.push stack_trace[j]
+      if stack_trace[j] instanceof abpv1.Ast then cursor.stack.pop! else cursor.stack.push stack_trace[j]
       j++
       true
     switch key
       case '\u001b[A'
-        sl = state.stack.length
-        if sl > 0 then while sl <= state.stack.length and stepLeft! then
+        sl = cursor.stack.length
+        if sl > 0 then while sl <= cursor.stack.length and stepLeft! then
       case '\u001b[B'
         if stack_trace[j] instanceof abpv1.Ast then stepRight!
-        sl = state.stack.length
+        sl = cursor.stack.length
         if sl > 2
-          while sl <= state.stack.length and stepRight! then
+          while sl <= cursor.stack.length and stepRight! then
           stepLeft!
       case '\u001b[C' then stepRight!
       case '\u001b[D' then stepLeft!
       case 'l' then != state.showLocal ; return repaint!
       case '\u001b[5~'
-        sl = state.stack.length ; i = 1
-        stepLeft! ; while sl != state.stack.length and stepLeft! then i++
-        if sl != state.stack.length then while i-- > 0 then stepRight!
+        sl = cursor.stack.length ; i = 1
+        stepLeft! ; while sl != cursor.stack.length and stepLeft! then i++
+        if sl != cursor.stack.length then while i-- > 0 then stepRight!
       case '\u001b[6~'
-        sl = state.stack.length ; i = 1
-        stepRight! ; while sl != state.stack.length and stepRight! then i++
-        if sl != state.stack.length then while i-- > 0 then stepLeft!
+        sl = cursor.stack.length ; i = 1
+        stepRight! ; while sl != cursor.stack.length and stepRight! then i++
+        if sl != cursor.stack.length then while i-- > 0 then stepLeft!
       case '\u001b[H'
         while stepLeft! then
       case '\u001b[F'
         while stepRight! then
     if i != j
-      state.pos = j ; repaint!
+      cursor.pos = j ; repaint!
   {paint, onkey}
 
 inspect = (x, memory, stack, {running=false,stack_trace=null}) ->
@@ -236,6 +249,13 @@ inspect = (x, memory, stack, {running=false,stack_trace=null}) ->
     started: false
     running: running
     stack_trace: stack_trace
+    cursor:
+      memory:
+        pos: {"#{util.hash x}":0, '':0}
+        hash: ''+util.hash x
+      stack_trace:
+        pos: 0
+        stack: []
   @screen =
     paint: ->
       todo 'better suggestions here than just going through the buffer, e.g. some statistically trained suggestions'
@@ -261,11 +281,11 @@ inspect = (x, memory, stack, {running=false,stack_trace=null}) ->
             @screen = stack_screen stack, @paint
             @paint!
           case 'm'
-            @screen = memory_screen memory, x, @paint
+            @screen = memory_screen {memory, x, cursor:@status.cursor.memory}, @paint
             @paint!
           case 't'
             if @status.stack_trace?
-              @screen = stack_trace_screen @status.stack_trace, @paint
+              @screen = stack_trace_screen {stack_trace:@status.stack_trace, cursor:@status.cursor.stack_trace}, @paint
               @paint!
           case 'd'
             if not @status.started
