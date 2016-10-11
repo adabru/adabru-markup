@@ -107,7 +107,7 @@ AdabruArticle = React.createClass do
           @setState {scrollTop: event.target.scrollTop}
       @props.items.map (item) ~>
         props = {key: item.props.id, ref: item.props.id}
-        if not typeof item.type is 'string' then props.scrollToMe = ~> @scrollTo item.props.id
+        if typeof item.type is not 'string' then props.scrollToMe = ~> @scrollTo item.props.id
         React.cloneElement item, props
   scrollTo: (id) ->
     if @refs[id]?

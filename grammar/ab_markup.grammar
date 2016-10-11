@@ -44,11 +44,11 @@ List_Item ← (('\n'+ :'  ')? [^\n])+
           ↺ (:'\n' | (Slides | Header | Blockquote | Codeblock | Linknote | List | Table | List_Item_Paragraph | Invalid_Block) )+
 List_Item_Paragraph ← ( !('\n\n' | '\n- ') '\n'? (!'\n' (Newline|Span))+ )+
 
-Table ← Table_Header (:[ |-]* :'\n')? Table_Body
+Table ← Table_Header Table_Body
 Table_Header ← (:'|' Table_Header_Item)+ :'\n'
 Table_Header_Item ← (!('|'|'\n') Span)*
 Table_Body ← Table_Body_Row*
-Table_Body_Row ← !'\n' :'|'? :' '? Table_Body_Row_Item (:'|' :' '? Table_Body_Row_Item)* :'\n'
+Table_Body_Row ← !'\n' :'|'? :' '? Table_Body_Row_Item (:'\n '? :'|' :' '? Table_Body_Row_Item)* :'\n'
 Table_Body_Row_Item ← [^\n|]* (('\n'+ :'  ') [^\n]*)* ↺ (:'\n' | Block)*
 
 Info ← (:'ℹ ' Block) | (:'ℹ\n' (!'\n\n' (:'\n' | Block))*)
@@ -62,11 +62,16 @@ Factsheet_Fact ← (!'\n' Span)*
 Paragraph ← ( (!'\n' (Newline|Span))+ '\n'? )+
 Newline ← :'  \n'
 
+Date_Label ← :'📆' ((Day :'/' Month :'/' Year) | (Month :'/' Year) | Year)
+Day ← [0-3]? [0-9]
+Month ← [0-1] [0-9]
+Year ← :'20'? [0-9] [0-9]
+
 Invalid_Block ← ( (!'\n' .)+ '\n')+
 
 ### Span Elements
 
-Span ↖ Hover | Link | Emphasis | Image | Technical | Info_Span | Warning_Span | Iframe | Fit | Brand | .
+Span ↖ Hover | Link | Emphasis | Image | Technical | Info_Span | Warning_Span | Iframe | Fit | Date_Label | Brand | .
 
 Hover ← :'[' Hover_Content :']((' Link_Url :'))'
 Hover_Content ← (!']' Span)+

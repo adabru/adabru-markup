@@ -41,7 +41,7 @@ abpv1 = require './abpv1.js'
 
 memory_screen = ({memory, x, cursor}, repaint) ->
   x_hash = ''+util.hash x
-  {f,inv,bold,dim} = colors
+  {f,b,inv,bold,dim} = colors
   line_lengths = (x.split '\n').map (s)->s.length
   line_and_col = (pos) ->
     for len,i in line_lengths
@@ -49,8 +49,8 @@ memory_screen = ({memory, x, cursor}, repaint) ->
   short_print = (ast, x, indent=0) ->
     s = ' '.repeat indent
     s += "#{ast.name} #{if ast.status == 'success' then '✔' else '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} "
-    s += x.substring ast.start, ast.end |>ellipsis _,50,60 |>f.2 |>replace _, [[/\n/g inv 'n'] [/ /g dim '·']]
-    s += x.substring ast.end, ast.lookAhead |>ellipsis _,20,16 |>f.3 |>replace _, [[/\n/g inv 'n'] [/ /g dim '·']]
+    s += x.substring ast.start, ast.end |>ellipsis _,50,60 |>f.92 |>b.100 |>replace _, [[/\n/g inv 'n']]
+    s += x.substring ast.end, ast.lookAhead |>ellipsis _,20,16 |>f.3 |>b.100 |>replace _, [[/\n/g inv 'n']]
     log s
     if ast.status == 'fail' then for c in ast.children
       short_print c, x, indent+1
@@ -103,7 +103,7 @@ memory_screen = ({memory, x, cursor}, repaint) ->
         s = "#{bold j}/#{x.length}: line #{bold l}, col #{bold c}"
         s += "#{if stepDown.length>0 then " [↓ #{stepDown.0.0}:#{stepDown.0.1}#{if stepDown.length>1 then ", …#{stepDown.length - 1}" else ''}]" else ''}"
         s += "\n"
-        s += "#{f.2 x.slice j-24>?0, j}#{f.2 bold x[j]}#{f.2 x.substr j+1, 24}" |>replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
+        s += "#{x.slice j-24>?0, j}#{bold x[j]}#{x.substr j+1, 24}" |>b.100 |>replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
         log s
         if memory[cursor.hash][j]? then for nt of memory[cursor.hash][j] then short_print memory[cursor.hash][j][nt], x
   {onkey, paint}
@@ -116,7 +116,7 @@ stack_screen = (stack) ->
   onkey: ->
 
 stack_trace_screen = ({stack_trace, cursor}, repaint) ->
-  {f,inv,bold,dim} = colors
+  {f,b,inv,bold,dim} = colors
   state =
     showLocal: false
   operator_map =
@@ -147,10 +147,10 @@ stack_trace_screen = ({stack_trace, cursor}, repaint) ->
       case true
         # ✔ 0 5 880 [TOC]n…
         s += "#{if ast.status == 'success' then f.2 '✔' else f.1 '✘'} #{ast.start} #{ast.end} #{ast.lookAhead} \n\n"
-        s += x.substring 0, ast.start |> ellipsis _, 50, 60  |> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
-        s += x.substring ast.start, ast.end |> ellipsis _, 100, 120  |>f.2|> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
-        s += x.substring ast.end, ast.lookAhead |> ellipsis _, 50, 60  |>f.3|> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
-        s += x.substring ast.lookAhead |> ellipsis _, 50, 60  |> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
+        s += x.substring 0, ast.start |> ellipsis _, 50, 60  |>b.100|> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
+        s += x.substring ast.start, ast.end |> ellipsis _, 100, 120  |>b.100|>f.2|> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
+        s += x.substring ast.end, ast.lookAhead |> ellipsis _, 50, 60  |>b.100|>f.3|> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
+        s += x.substring ast.lookAhead |> ellipsis _, 50, 60  |>b.100|> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
       case false
         # (:n | Block)*
         print_ops = ({func,node},nt=false) ->
@@ -193,9 +193,9 @@ stack_trace_screen = ({stack_trace, cursor}, repaint) ->
         s += print_ops {func, node}, func.name.endsWith 'NT'
         # [TOC]…
         s += '\n\n'
-        s += x.substring 0, pos |>ellipsis _, 50, 60  |>replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
-        s += x.substring pos, pos+1 |>replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']] |>f.2 |>bold
-        s += x.substring pos+1, x.length |> ellipsis _, 50, 60  |> replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
+        s += x.substring 0, pos |>ellipsis _, 50, 60  |>b.100|>replace _, [[/\n/g "#{inv 'n'}\n"]]
+        s += x.substring pos, pos+1 |>replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']] |>b.100|>f.2 |>bold
+        s += x.substring pos+1, x.length |> ellipsis _, 50, 60  |>b.100|> replace _, [[/\n/g "#{inv 'n'}\n"]]
     log s
   onkey = (key) ->
     i = j = cursor.pos

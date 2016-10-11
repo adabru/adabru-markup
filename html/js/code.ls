@@ -30,7 +30,7 @@ AdabruCodeContainer = React.createClass do
     if not @props.import?
       React.createElement AdabruCode, @props
     else
-      pp = {} <<<< @props ; pp.content =@state.importedContent
+      pp = {} <<< @props ; pp.content =@state.importedContent
       React.createElement AdabruCode, pp
 
 
@@ -51,16 +51,17 @@ AdabruCode = React.createClass do
         numChars: 0
         flashState: 0
   componentDidMount: ->
-    @highlightCode()
-    @setState do
-      clientHeight: ReactDOM.findDOMNode(this).clientHeight
-      contentHash: @hashCode @props.content
+    setTimeout ~>
+      @highlightCode!
+      @setState do
+        clientHeight: ReactDOM.findDOMNode(this).clientHeight
+        contentHash: @hashCode @props.content
   componentWillReceiveProps: (nextProps) ->
     if @state.contentHash != @hashCode nextProps.content
       # trigger new measurement
       @setState clientHeight: 0
   componentDidUpdate: ->
-    @highlightCode()
+    @highlightCode!
     hash = @hashCode @props.content
     if @state.contentHash != hash
       # content changed
