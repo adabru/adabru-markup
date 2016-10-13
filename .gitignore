@@ -14,3 +14,5 @@ parser/build/
 html/js/build
 
 dev/grammar_test.oracle
+
+search/test/

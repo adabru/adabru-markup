@@ -7,14 +7,14 @@ log = console.log
 print = (o) -> console.log util.inspect o,{+colors}
 write = (s) -> process.stdout.write s
 flatten = (arr) -> [].concat.apply [], arr
-repl = (__o) ->
+absh = (o) ->
   buf = {}
   history =
     filename: "#{process.env.HOME}/.livescript_repl.history"
     entries: []
     pos: -1
   try history.entries = fs.readFileSync(history.filename, 'utf8').split '\n' catch e then
-  global <<< __o
+  global <<< o
   process.stdin
     ..setEncoding 'utf8'
     ..setRawMode true
@@ -31,6 +31,8 @@ repl = (__o) ->
           write ' \u001b[D'
       paintBuf = (x0,x1) -> moveTo 0,x0 ; write "\u001b[J#{buf.content}" ; fixCursor buf.content.length ; moveTo x1, buf.content.length
       switch d
+        case '\u001b[5~' then
+        case '\u001b[6~' then
         case '\u001b[A'
           pos = history.entries.slice!.reverse!.findIndex (x,i) -> i > history.pos and x.startsWith buf.content.slice 0,buf.pos
           if pos isnt -1
@@ -52,7 +54,7 @@ repl = (__o) ->
           buf.content = "#{buf.content.slice 0,buf.pos}#{buf.content.slice buf.pos+1}"
           paintBuf buf.pos,buf.pos
         case '\u007f'
-          buf.content = "#{buf.content.slice 0,buf.pos-1}#{buf.content.slice buf.pos}"
+          buf.content = "#{buf.content.slice 0,(buf.pos-1)>?0}#{buf.content.slice buf.pos}"
           paintBuf buf.pos, buf.pos=buf.pos-1>?0
         case '\r'
           try
@@ -121,8 +123,9 @@ repl = (__o) ->
 
 
 
-exports <<< {repl}
+exports <<< {absh}
 
-i = 2
-let j = 3
-  repl {j}
+if process.argv.1.endsWith 'absh.ls'
+  i = 2
+  let j = 3
+    absh {j}
