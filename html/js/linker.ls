@@ -38,18 +38,20 @@ AdabruLinker = react.createClass do
             {}
             [buildFileItem c,"#{@props.baseurl}/#name" for c in children]
 
-    buildSearchItem = ({s,weight,nt,filename}, i) ->
+    buildSearchItem = ({s,weight,nt,filename,context}, i) ->
       li do
         key: i
-        span do
-          className: "weight"
-          weight
-        span do
-          className: "rawtext"
-          s
-        span do
-          className: "filename"
-          filename.split('/').reverse!.join(' ')
+        a do
+          href: filename
+          span do
+            className: "weight"
+            weight
+          span do
+            className: "context"
+            context
+          span do
+            className: "filename"
+            filename.split('/').reverse!.join(' ')
 
     div do
       className: 'linker'

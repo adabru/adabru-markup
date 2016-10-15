@@ -21,7 +21,7 @@ function build_concordance(name,tree)
     if util.isString ast
       for s in ast.split /[ \n]/
         _s = s.replace(/[-_{}\n]/g '').toLowerCase!
-        linearized.push {_s, s, nt, date, filename:name}
+        linearized.push {_s, s, nt, date, filename:name, i:linearized.length}
     else
       [visit c, "#nt #{ast.name}", date for c in ast.children]
   visit tree, '', {}
@@ -56,12 +56,17 @@ function weight(finding, expr)
 
   99 - 10 * levenshtein expr, finding._s
 
+function beef(finding, conc)
+  finding.context = conc[finding.filename].slice(0 >? finding.i-5, finding.i+5).map((f) -> f.s).join(' ')
+
+
 function search_machine(callback=((f) -> log f ; true))
   new
     @conc = {}
     @search = (expr, _callback=callback) -> search expr, @conc, _callback
     @addDocument = (name,tree) -> @conc[name] = build_concordance name,tree
     @weight = weight
+    @beef = (f) -> beef f, @conc
 
 exports <<< {search_machine}
 

@@ -124,6 +124,8 @@ server = http.createServer (req, res) ->
           max_weight = 0 ; found = void
           for f,j in findings then (if f.weight > max_weight then [max_weight,found]=[f.weight,j])
           if found? then filtered_findings.push findings.splice(found,1).0 else break
+        for f in filtered_findings
+          searcher.beef f
         res.end JSON.stringify filtered_findings
     case err?
       res.writeHead 404 ; res.end!
