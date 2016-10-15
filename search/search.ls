@@ -14,62 +14,84 @@ glob = (pattern) ->
   else [pattern]
 {absh} = require './absh.ls'
 
-help = ->
-  console.log '''
-
-
-  \u001b[1musage\u001b[0m: search FILES
-
-      -s <expr>   search in FILES for <expression>
-      -c <file>   write compiled parser to <file>, if <file>
-                  is not given, it is written to stdout
-      -d          enter debug mode even on success
-      --help
-
-  \u001b[1mExamples\u001b[0m
-  search.ls ./test/a* ./test/b* -s 'some keywords'
-
-  '''
-
-# show help
-argv = minimist process.argv.slice(2), {}
-if argv.help or argv._.length == 0
-  help!
-  return
-
-# wildcards
-files = flatten [glob p for p in argv._]
-documents = [JSON.parse fs.readFileSync f, 'utf-8' for f in files]
-
-# concordance
-conc = build_concordance documents
-function build_concordance(documents)
+function build_concordance(name,tree)
   # date spelling nonterminals position
-  conc = {}
   linearized = []
-  for d in documents
-    linearized.push l=[]
-    visit = (ast, nt, date) ->
-      if util.isString ast
-        for s in ast.split ' '
-          _s = s.replace(/[-_{}\n]/g '').toLowerCase!
-          l.push {_s, s, nt, date}
-      else
-        [visit c, "#nt #{ast.name}", date for c in ast.children]
-    visit d, '', {}
-  flatten linearized
+  visit = (ast, nt, date) ->
+    if util.isString ast
+      for s in ast.split /[ \n]/
+        _s = s.replace(/[-_{}\n]/g '').toLowerCase!
+        linearized.push {_s, s, nt, date, filename:name}
+    else
+      [visit c, "#nt #{ast.name}", date for c in ast.children]
+  visit tree, '', {}
+  linearized
 
-# search
 function search(expr, conc, callback)
+  expr .= toLowerCase!
   # edit distance 1: /cat/ becomes /(c?.?at)|(ca?.?t)|(cat?.?)/
   regex = ["(#{expr.slice 0,i}?.?#{expr.slice i})" for i from 1 to expr.length]
   # letter swaps: /cat/ becomes /(.ct)|(c.a)/
-  regex ++= ["(#{expr.slice 0,i-1}.#{expr[i-1]}#{expr.slice i+1})" for i from 1 to expr.length-1]
+  regex ++= ["(#{expr.slice 0,i-1}#{expr[i]}#{expr[i-1]}#{expr.slice i+1})" for i from 1 to expr.length-1]
   regex = new RegExp regex.join '|'
-  for w in conc
-    if regex.test w._s then callback w
+  (-> for name,lin of conc
+    for w in lin
+      if regex.test w._s
+        if not callback w
+          callback null ; return)!
+  callback null
   regex
 
+function weight(finding, expr)
+  levenshtein = (s,t) ->
+    switch; case s == t then return 0 ;case s == '' then return t.length ;case t == '' then return s.length
+    [v0,v1] = [[0 to t.length] []]
+    for i from 0 to s.length-1 then
+      v1[0] = i+1
+      for j from 0 to t.length-1
+        cost = if s[i] == t[j] then 0 else 1
+        v1[j+1] =   v1[j]+1   <?   v0[j+1]+1   <?   v0[j]+cost
+      v0 = v1.slice!
+    v1[t.length]
+
+  99 - 10 * levenshtein expr, finding._s
+
+function search_machine(callback=((f) -> log f ; true))
+  new
+    @conc = {}
+    @search = (expr, _callback=callback) -> search expr, @conc, _callback
+    @addDocument = (name,tree) -> @conc[name] = build_concordance name,tree
+    @weight = weight
+
+exports <<< {search_machine}
+
 if process.argv.1.endsWith 'search.ls'
-  s = (exp) -> search exp, conc, log
-  absh {s} ; return
+  help = -> console.log '''
+
+
+    \u001b[1musage\u001b[0m: search FILES
+
+        -s <expr>   search in FILES for <expression>
+        -c <file>   write compiled parser to <file>, if <file>
+                    is not given, it is written to stdout
+        -d          enter debug mode even on success
+        --help
+
+    \u001b[1mExamples\u001b[0m
+    search.ls ./test/a* ./test/b* -s 'some keywords'
+
+    '''
+
+  # show help
+  argv = minimist process.argv.slice(2), {}
+  if argv.help or argv._.length == 0
+    help!
+    return
+
+  # wildcards
+  files = flatten [glob p for p in argv._]
+
+  sm = search_machine!
+  for f in files
+    sm.addDocument f, JSON.parse fs.readFileSync f, "utf8"
+  absh {sm} ; return

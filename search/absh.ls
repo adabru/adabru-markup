@@ -112,6 +112,7 @@ absh = (o) ->
           else
             process.stdin
               ..pause!
+              ..setRawMode false
               ..removeListener 'data', callback
           try fs.writeFileSync history.filename, history.entries.join '\n'
         default

@@ -19,4 +19,4 @@ AdabruFit = react.createClass do
         @setState hover: false
       @props.children
 
-(exports ? this) <<< {AdabruFit}
+exports <<< {AdabruFit}

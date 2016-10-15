@@ -13,7 +13,8 @@ abpv1 = require '../../parser/abpv1.js'
 {AdabruSlides} = require './slides.ls'
 {AdabruFactsheet} = require './factsheet.ls'
 {AdabruFit} = require './span.ls'
-if window? then Object.assign window, {React, ReactDOM, abpv1, grammar: ab_markup_grammar
+{AdabruLinker} = require './linker.ls'
+window? <<< {React, ReactDOM, abpv1, grammar: ab_markup_grammar
   ,AdabruPage, AdabruTableofcontents, AdabruArticle, AdabruFiletree, AdabruCodeContainer, AdabruSlides, AdabruFactsheet, AdabruFit}
 
 if process.env.BROWSER?
@@ -254,9 +255,12 @@ adabruMarkup =
       case undefined then ast
       default then @unknownAST ast
 
-Object.assign exports ? this, {
+  printLinker: (domNode, args) ->
+    ReactDOM.render React.createElement(AdabruLinker, args), domNode
+
+exports <<<
   parseDocument: adabruMarkup.parseDocument.bind(adabruMarkup)
   decorateTree: adabruMarkup.decorateTree.bind(adabruMarkup)
   printDocument: adabruMarkup.printDocument.bind(adabruMarkup)
   parseAndPrint: adabruMarkup.parseAndPrint.bind(adabruMarkup)
-}
+  printLinker: adabruMarkup.printLinker

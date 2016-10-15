@@ -20,4 +20,4 @@ AdabruFactsheet = React.createClass do
         {}
         [li key:i, f for f,i in @props.facts]
 
-Object.assign exports ? this, {AdabruFactsheet}
+exports <<< {AdabruFactsheet}

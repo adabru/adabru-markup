@@ -11,17 +11,10 @@ util.hash = (s) ->
   hash
 print = (o, d=10) ->
   console.log util.inspect o, {colors: true, depth: d}
-colors = (->
-  esc = (e1,e2,s) --> "\u001b[#{e1}m#{s}\u001b[#{e2}m"
-  b = []
-  b[0 to 7] = [esc("4#i","49") for i from 0 to 7]
-  b[100 to 107] = [esc("10#i","49") for i from 0 to 7]
-  f = []
-  f[0 to 7] = [esc("3#i","39") for i from 0 to 7]
-  f[90 to 97] = [esc("9#i","39") for i from 0 to 7]
-  [inv,pos] = [esc('07','27'),esc('27','07')]
-  [bold,dim,reset] = [esc('01',22),esc('02',22),esc('00','00')]
-  {f,b,inv,pos,bold,dim,reset})!
+colors = let e = ((e1,e2,s) --> "\u001b[#{e1}m#{s}\u001b[#{e2}m")
+    b = [] ; for i in [0 to 7] then b[i]=e("4#i","49") ; for i in [100 to 107] then b[i]=e(i,"49")
+    f = [] ; for i in [0 to 7] then f[i]=e("3#i","39") ; for i in [90 to 97] then f[i]=e(i,"39")
+    {f,b,inv:e('07','27'), pos:e('27','07'), bold:e('01',22), dim:e('02',22), reset:e('00','00')}
 error = (s) ->
   console.log '\u001b[1m\u001b[31m'+s+'\u001b[39m\u001b[0m'
 log = (s, newline=true) ->
