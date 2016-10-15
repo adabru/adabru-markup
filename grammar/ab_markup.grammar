@@ -47,8 +47,8 @@ List_Item_Paragraph ← ( !('\n\n' | '\n- ') '\n'? (!'\n' (Newline|Span))+ )+
 Table ← Table_Header Table_Body
 Table_Header ← (:'|' Table_Header_Item)+ :'\n'
 Table_Header_Item ← (!('|'|'\n') Span)*
-Table_Body ← Table_Body_Row*
-Table_Body_Row ← !'\n' :'|'? :' '? Table_Body_Row_Item (:'\n '? :'|' :' '? Table_Body_Row_Item)* :'\n'
+Table_Body ← (Table_Body_Row :'\n'?)*
+Table_Body_Row ← !'\n' :'|'? :' '? Table_Body_Row_Item (:'\n '? :'|' :' '? Table_Body_Row_Item)*
 Table_Body_Row_Item ← [^\n|]* (('\n'+ :'  ') [^\n]*)* ↺ (:'\n' | Block)*
 
 Info ← (:'ℹ ' Block) | (:'ℹ\n' (!'\n\n' (:'\n' | Block))*)

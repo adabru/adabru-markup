@@ -83,7 +83,9 @@ memory_screen = ({memory, x, cursor}, repaint) ->
           repaint!
   paint = ->
     log "#{bold '0-9 ← → BS'} move to character #{bold '↓ ↑'} change buffer\n"
-    if (cursor.hash.match(/([^:]+)/g) || []).length is 0
+    if not memory[x_hash]
+      log "\nbuffer is empty! no memoization was made"
+    else if (cursor.hash.match(/([^:]+)/g) || []).length is 0
       let j = cursor.pos[cursor.hash]
         hashes = Object.keys(memory).filter((k)->k.startsWith x_hash)
         log hashes.map((k,i)->if i == j then bold k else k).join('\n')
@@ -99,6 +101,7 @@ memory_screen = ({memory, x, cursor}, repaint) ->
         s += "#{x.slice j-24>?0, j}#{bold x[j]}#{x.substr j+1, 24}" |>b.100 |>replace _, [[/\n/g "#{inv 'n'}\n"] [/ /g dim '·']]
         log s
         if memory[cursor.hash][j]? then for nt of memory[cursor.hash][j] then short_print memory[cursor.hash][j][nt], x
+
   {onkey, paint}
 
 stack_screen = (stack) ->
@@ -322,6 +325,7 @@ export debug_parse = (x, grammar, parser_options={}, {print_ast=true,stack_trace
   inspect_inst.start!
   ast <- abpv1.parse(x, grammar, Object.assign parser_options, {memory,stack}).catch(log).then _
   inspect_inst.stopped!
+  stack_trace?.push stack[0]
   if ast.status == 'fail'
     log 'parse failed'
     fulfill!

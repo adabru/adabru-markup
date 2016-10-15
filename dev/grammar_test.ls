@@ -3,9 +3,10 @@
 # this script must be called from parent directory
 
 require! [fs,child_process]
+require! [minimist]
 
 log = console.log
-args = process.argv.slice 2
+args = minimist process.argv.slice(2), {}
 
 # compile files
 for f in fs.readdirSync('./parser').filter((x)->x is /\.ls$/)
@@ -14,26 +15,25 @@ for f in fs.readdirSync('./parser').filter((x)->x is /\.ls$/)
     child_process.execSync "lsc -c #f.ls", encoding:'utf-8',stdio:'inherit'
 
 # select file to parse
-file = switch args.0
-  case '--create-oracle', '--verify' then './grammar/informal_spec'
-  case void then './dev/grammar_test.data'
-  default then args.0
+file = switch
+  case args['create-oracle'], args.['verify'] then './grammar/informal_spec'
+  case args._.length is 0 then './dev/grammar_test.data'
+  default then args._.0
 
-# create fresh grammar
-child_process.execSync "node ./parser/generator.js ./grammar/ab_markup.grammar -d -c ./html/js/build/ab_markup_grammar.json -i #file", encoding:'utf-8',stdio:'inherit'
+# create fresh grammar & parse
+child_process.execSync "node ./parser/generator.js ./grammar/ab_markup.grammar -d -c ./html/js/build/ab_markup_grammar.json -i #file #{if args.nt? then "--nt #{args.nt}" else ""}", encoding:'utf-8',stdio:'inherit'
 
-# parse
+# after parse
 abpv1 = require '../parser/abpv1.js'
 grammar = require '../html/js/build/ab_markup_grammar.json'
 input = fs.readFileSync file, {encoding: 'utf8'}
 
-# after parse
-switch args.0
-  case '--create-oracle'
+switch
+  case args['create-oracle']
     ast <- abpv1.parse(input,grammar).then _
     parse_result = JSON.stringify ast
     fs.writeFileSync './dev/grammar_test.oracle', parse_result
-  case '--verify'
+  case args['verify']
     ast <- abpv1.parse(input,grammar).then _
     parse_result = JSON.stringify ast
     oracle = fs.readFileSync './dev/grammar_test.oracle', {encoding: 'utf8'}

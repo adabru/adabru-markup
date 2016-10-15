@@ -245,7 +245,7 @@ decorate_parser = (parser, {
 
 export parse = (x, grammar, options={}) ->
   (fulfill, reject) <- new Promise _
-  options := {memory:{},startNT:Object.keys(grammar)[0],stack:[],blocking_rate:5e5} `Object.assign` options
+  options := {memory:{},startNT:Object.keys(grammar)[0],stack:[],blocking_rate:5e5} <<< options
 
   # clone grammar for further processing
   grammar := JSON.parse JSON.stringify grammar
