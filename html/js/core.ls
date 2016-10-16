@@ -80,8 +80,6 @@ adabruMarkup =
     if not domNode? then printedTree else ReactDOM.render printedTree, domNode
 
   decorateTree: (ast) ->
-    @store = {}
-
     # merge strings
     @visit do
       ast
@@ -92,17 +90,20 @@ adabruMarkup =
           if ast.children[i].name == undefined and ast.children[i-1].name == undefined
             ast.children[i-1] += ast.children.splice(i,1)
 
-
     # link-references
-    @store.linkReference = {}
-
-    @visit(
+    linkReference = {}
+    @visit do
       ast
       (ast) ~>
         ast.name == 'Linknote'
       (ast) ~>
-        @store.linkReference[@printChild(ast, 'Link_Text')] = @printChild(ast, 'Link_Url')
-    )
+        linkReference[@printChild(ast, 'Link_Text')] = @printChild(ast, 'Link_Url')
+    @visit do
+      ast
+      (ast) ~>
+        ast.name == 'Link_Reference'
+      (ast) ~>
+        ast.linkUrl = linkReference[@printChild(ast, 'Link_Text')]
 
     ast
 
@@ -116,15 +117,12 @@ adabruMarkup =
   printChild: (ast, name) ->
     @getChild(ast, name)?.children[0]
   printChildren: (ast) ->
-    if ast.children.length == 1
-      @printTree(ast.children[0])
-    else
-      ast.children.map (c,i) ~>
-        t = @printTree c
-        if React.isValidElement t
-          React.cloneElement t, {key: i}
-        else
-          t
+    ast.children.map (c,i) ~>
+      t = @printTree c
+      if React.isValidElement t
+        React.cloneElement t, {key: i}
+      else
+        t
 
   unknownAST: (ast) ->
     console.warn 'Nonterminal "'+ast.name+'" is not known!'
@@ -224,9 +222,7 @@ adabruMarkup =
             {}
             @printChildren @getChild(ast, 'Hover_Content')
       case 'Link_Inline' then a({href:@printChild(ast, 'Link_Url')}, @printChildren @getChild(ast, 'Link_Text') )
-      case 'Link_Reference'
-        text = @printChild(ast, 'Link_Text')
-        a({href: @store.linkReference[text]}, text)
+      case 'Link_Reference' then a({href: ast.linkUrl}, @printChild(ast, 'Link_Text'))
       case 'Link_Auto'
         url = ast.children.join('')
         a({href: url}, url)

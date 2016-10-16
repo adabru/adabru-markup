@@ -159,7 +159,7 @@ server = http.createServer (req, res) ->
         <script>
           var filepath = '#p?download'
           fetch(filepath, {method: 'get'}).then( r => r.text() ).then( data => {
-            adabruMarkup.printDocument(JSON.parse(data), document.querySelector('\#app'))
+            adabruMarkup.printDocument(adabruMarkup.decorateTree(JSON.parse(data)), document.querySelector('\#app'))
           })
         </script>"""
       res.end s

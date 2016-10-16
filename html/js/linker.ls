@@ -36,7 +36,7 @@ AdabruLinker = react.createClass do
         if children?
           ul do
             {}
-            [buildFileItem c,"#{@props.baseurl}/#name" for c in children]
+            [buildFileItem c,"#baseurl/#name" for c in children]
 
     buildSearchItem = ({s,weight,nt,filename,context}, i) ->
       li do
