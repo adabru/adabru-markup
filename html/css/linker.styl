@@ -1,3 +1,15 @@
+$clear
+  color: inherit
+  line-height: inherit
+  padding: 0
+  background-color: inherit
+  border: none
+  font-size: 100%
+  font-weight: normal
+  font-family: inherit
+  &:before
+    content: none
+
 .linker
   textarea
     margin: 5px
@@ -41,3 +53,45 @@
         .context
           display: inline-block
           width: 60%
+          span
+            &.Header_L1
+              text-shadow: 0 0 1px #000
+              font-weight: bold
+            &.Header_L2
+              text-shadow: 0 0 1px #000
+            &.Header_L3
+              font-weight: bold
+            &.Apielement
+              @extends $clear
+              color: #600
+            &.Terminal
+              @extends $clear
+              font-family: monospace
+            &.Path
+              font-size: 0.9em
+            &.Key
+              min-width: 1em
+              padding: .2em .3em
+              margin: .1em
+              font: normal .85em/1 "Lucida Grande", Lucida, Arial, sans-serif
+              border-radius: .3em
+              background: rgb(250, 250, 250)
+              background: -moz-linear-gradient(top, rgb(210, 210, 210), rgb(255, 255, 255))
+              background: -webkit-gradient(linear, left top, left bottom, from(rgb(210, 210, 210)), to(rgb(255, 255, 255)))
+              color:  rgb(50, 50, 50)
+              text-shadow: 0 0 2px rgb(255, 255, 255)
+              box-shadow: inset 0 0 1px rgb(255, 255, 255), inset 0 0 .4em rgb(200, 200, 200), 0 .1em 0 rgb(130, 130, 130), 0 .11em 0 rgba(0, 0, 0, .4), 0 .1em .11em rgba(0, 0, 0, .9)
+            &.Warning
+              @extends $clear
+              background-color: #fec
+              border-radius: 5px
+              color: #986
+            &.Info
+              @extends $clear
+              background-color: #e8e8e8
+              border-radius: 5px
+              color: #888
+            &.hit
+              background-color: #ccf
+              box-shadow: 0 0 2px #ccf
+              border-radius: 5px

@@ -46,9 +46,11 @@ AdabruLinker = react.createClass do
           span do
             className: "weight"
             weight
-          span do
+          div do
             className: "context"
-            context
+            [(if e? then span {key:j, className:that.nt}, "#{that.s} "
+              else       span {key:j, className:"hit #nt"}, "#s "
+            ) for e,j in context]
           span do
             className: "filename"
             filename.split('/').reverse!.join(' ')
