@@ -85,7 +85,12 @@ AdabruArticle = React.createClass do
         event.preventDefault()
         @refs.scroll.scrollTop += event.deltaY
     # scroll to element defined in window.location.hash, after waiting a bit for document loading
-    if window.location.hash then setTimeout (~> @scrollTo window.location.hash.slice 1), 200
+    if (h=window.location.hash)?
+      if h.startsWith '#:'
+        index = /#:[0-9]*:([0-9]*)/.exec(h)?.1
+        if index? then setTimeout (~> @scrollTo +index), 200
+      else
+        setTimeout (~> @scrollTo h.slice 1), 200
   componentWillReceiveProps: (nextProps) ->
     if nextProps.scrollToCommand.time > @props.scrollToCommand.time
       @scrollTo nextProps.scrollToCommand.id
@@ -109,11 +114,15 @@ AdabruArticle = React.createClass do
         props = {key: item.props.id, ref: item.props.id}
         if typeof item.type is not 'string' then props.scrollToMe = ~> @scrollTo item.props.id
         React.cloneElement item, props
-  scrollTo: (id) ->
-    if @refs[id]?
-      @animate {scrollTop: @refs.scroll.scrollTop + ReactDOM.findDOMNode(@refs[id]).getBoundingClientRect().top}, 500
-    else
-      console.warn 'There is no ref to a top-level element with id: "'+id+'"! So no scrolling to it'
+  scrollTo: (idOrIndex) ->
+    switch
+      | "string" is typeof idOrIndex and @refs[idOrIndex]?
+        @animate {scrollTop: @refs.scroll.scrollTop + ReactDOM.findDOMNode(@refs[idOrIndex]).getBoundingClientRect().top}, 500
+      | "string" is typeof idOrIndex and not @refs[idOrIndex]?
+        console.warn 'There is no ref to a top-level element with id: "'+idOrIndex+'"! So no scrolling to it'
+      | "number" is typeof idOrIndex
+        @animate {scrollTop: @refs.scroll.scrollTop + ReactDOM.findDOMNode(this).children[idOrIndex].getBoundingClientRect().top}, 500
+      default console.warn 'scrollTo accepts an id or an index'
 
 Object.assign exports ? this,
   AdabruTableofcontents: AdabruTableofcontents

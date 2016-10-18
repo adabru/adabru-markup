@@ -17,14 +17,14 @@ glob = (pattern) ->
 function build_concordance(name,tree)
   # date spelling nonterminals position
   linearized = []
-  visit = (ast, nt, date) ->
+  visit = (ast, prefix, nt, date) ->
     if util.isString ast
       for s in ast.split /[ \n]/
         _s = s.replace(/[-_{}\n]/g '').toLowerCase!
-        linearized.push {_s, s, nt, date, filename:name, i:linearized.length}
+        linearized.push {_s, s, i_ast:prefix, nt, date, filename:name, i:linearized.length}
     else
-      [visit c, "#{(true:"" false:"#nt ")[nt is '']}#{ast.name}", date for c in ast.children]
-  visit tree, '', {}
+      [visit c, "#{prefix}:#i", "#{(true:"" false:"#nt ")[nt is '']}#{ast.name}", date for c,i in ast.children]
+  visit tree, '', '', {}
   linearized
 
 function search(expr, conc, callback)

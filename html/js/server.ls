@@ -53,7 +53,7 @@ cache = (filepath) ->
   cachepath = "#docroot/.adabru_markup/cache/#{path.basename filepath}##{hash filepath}"
   try cachepath_mtime = fs.statSync(cachepath).mtime.getTime! catch e then cachepath_mtime = 0
   switch
-    case filepath is /\.(js|css)$/
+    case filepath is /\.(js|css|png|svg)$/
       fs.createReadStream filepath
     case _cache[filepath]?.timestamp > fs.statSync(filepath).mtime.getTime!
       s = new stream.Readable {read:(->)} ; s.push _cache[filepath].content ; s.push null ; s
@@ -143,7 +143,7 @@ server = http.createServer (req, res) ->
         </script>"""
       res.end s
     case stats.isFile! and q.download?
-      contenttypes = {'.js':'application/javascript', '.css':'text/css', '.styl':'text/css'}
+      contenttypes = {'.js':'application/javascript', '.css':'text/css', '.styl':'text/css', '.svg':'image/svg+xml', '.png':'image/png'}
       res.writeHead 200, {'Content-Type': "#{contenttypes[path.extname lp]}; charset=utf-8"}
       cache lp
         ..on 'error', -> res.writeHead 404 ; res.end!
