@@ -23,7 +23,7 @@ Blockquote ← ( :'>' [^\n]* '\n' )+ ↺ .*
 Codeblock ← :'```' Codelanguage :'\n' (Codeimport | Codeinline)
 Codeimport ← :'```↑' (:' '* !'\n' Codeimport_Option)+
 Codeimport_Option ← (![ \n] .)+
-Codeinline ← (!'```' .)* :'```'
+Codeinline ← (!'\n```' .)* :'\n```'
 Codelanguage ← (!'\n' .)*
 
 Linknote ← :'[' Link_Text :']: ' Link_Url :[ \t]*
@@ -48,7 +48,7 @@ Table ← Table_Header Table_Body
 Table_Header ← Table_Header_Item+ :'\n'?
 Table_Header_Item ← :'|' Table_Colspan? :' '? (![|\n] Span)*
 Table_Body ← (Table_Body_Row :'\n'?)*
-Table_Body_Row ← !'\n' Table_Body_Row_Item (:'\n '? Table_Body_Row_Item)*
+Table_Body_Row ← !'\n' Table_Body_Row_Item (:'\n '? Table_Body_Row_Item)* :'|'?
 Table_Body_Row_Item ← :'|'? Table_Colspan? (&(' ' | [^\n|] | '\n'+ '  ') :' '? [^\n|]* (('\n'+ :'  ') [^\n]*)* ↺ (:'\n' | Block)*)
 Table_Colspan ← '|'+
 
