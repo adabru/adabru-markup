@@ -207,7 +207,7 @@ adabruMarkup =
       case 'Warning' then div({className: 'warning'},   @printChildren(ast))
 
       case 'Factsheet' then React.createElement AdabruFactsheet,
-        thing: @printChild ast, 'Factsheet_Thing'
+        thing: @printChildren @getChild ast, 'Factsheet_Thing'
         facts: if (c=@getChild ast, 'Factsheet_Facts')? then @printChildren c else []
       case 'Factsheet_Fact' then @printChildren ast
 
