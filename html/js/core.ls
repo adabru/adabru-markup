@@ -199,7 +199,7 @@ adabruMarkup =
       case 'Table_Body' then   @printChildren(ast)
       case 'Table_Body_Row' then tr({},   @printChildren(ast))
       case 'Table_Body_Row_Item' then td do
-        colSpan: if @getChild(ast,'Table_Colspan')? then that.children.length + 1 else 1
+        colSpan: if @getChild(ast,'Table_Colspan')? then that.children.0.length + 1 else 1
         @printChildren(ast)
       case 'Table_Colspan' then undefined
 

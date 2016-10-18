@@ -107,7 +107,13 @@ AdabruArticle = React.createClass do
       onScroll: (event) ~>
         if event.target == @refs.scroll
           if @props.onScrolled?
-            scrolledToItem = @props.items.find (item) ~> ReactDOM.findDOMNode(@refs[item.props.id]).getBoundingClientRect().top >= 0
+            viewport_height = ReactDOM.findDOMNode(this).getBoundingClientRect!.height
+            for item in @props.items
+              rect = ReactDOM.findDOMNode(@refs[item.props.id]).getBoundingClientRect!
+              view_height = (rect.bottom <? viewport_height) - (rect.top >? 0)
+              if view_height > (last_view_height ? 0)
+                scrolledToItem = item
+                last_view_height = view_height
             @props.onScrolled scrolledToItem.props.id
           @setState {scrollTop: event.target.scrollTop}
       @props.items.map (item) ~>
