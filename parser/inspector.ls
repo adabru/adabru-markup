@@ -183,7 +183,7 @@ stack_trace_screen = ({stack_trace, cursor}, repaint) ->
               cc = p.0.map (c) -> if precedence.indexOf(func.name) < precedence.indexOf(c.func.name) then "(#{print_ops c with node:c})" else print_ops c with node:c
               switch func.name
                 case 'SEQ' then cc.join ' '
-                case 'ALT', 'FIRST_LETTER_ALT' then cc.join ' | 'operator_map
+                case 'ALT', 'FIRST_LETTER_ALT' then cc.join ' | '
                 case 'PASS' then cc.join ' ↺ '
             default then util.inspect p, {+colors,depth:1}
         s += print_ops {func, node}, func.name.endsWith 'NT'

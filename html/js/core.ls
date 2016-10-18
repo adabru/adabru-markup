@@ -195,10 +195,13 @@ adabruMarkup =
 
       case 'Table' then table({}, tbody({}, @printChildren(ast)))
       case 'Table_Header' then tr({},   @printChildren(ast))
-      case 'Table_Header_Item' then th({},   @printChildren(ast))
+      case 'Table_Header_Item' then th {}, @printChildren(ast)
       case 'Table_Body' then   @printChildren(ast)
       case 'Table_Body_Row' then tr({},   @printChildren(ast))
-      case 'Table_Body_Row_Item' then td({},   @printChildren(ast))
+      case 'Table_Body_Row_Item' then td do
+        colSpan: if @getChild(ast,'Table_Colspan')? then that.children.length + 1 else 1
+        @printChildren(ast)
+      case 'Table_Colspan' then undefined
 
       case 'Info' then div({className: 'info'},   @printChildren(ast))
       case 'Warning' then div({className: 'warning'},   @printChildren(ast))

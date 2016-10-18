@@ -45,11 +45,12 @@ List_Item ← (('\n'+ :'  ')? [^\n])+
 List_Item_Paragraph ← ( !('\n\n' | '\n- ') '\n'? (!'\n' (Newline|Span))+ )+
 
 Table ← Table_Header Table_Body
-Table_Header ← (:'|' Table_Header_Item)+ :'\n'
-Table_Header_Item ← (!('|'|'\n') Span)*
+Table_Header ← Table_Header_Item+ :'\n'?
+Table_Header_Item ← :'|' Table_Colspan? :' '? (![|\n] Span)*
 Table_Body ← (Table_Body_Row :'\n'?)*
-Table_Body_Row ← !'\n' :'|'? :' '? Table_Body_Row_Item (:'\n '? :'|' :' '? Table_Body_Row_Item)*
-Table_Body_Row_Item ← [^\n|]* (('\n'+ :'  ') [^\n]*)* ↺ (:'\n' | Block)*
+Table_Body_Row ← !'\n' Table_Body_Row_Item (:'\n '? Table_Body_Row_Item)*
+Table_Body_Row_Item ← :'|'? Table_Colspan? (&(' ' | [^\n|] | '\n'+ '  ') :' '? [^\n|]* (('\n'+ :'  ') [^\n]*)* ↺ (:'\n' | Block)*)
+Table_Colspan ← '|'+
 
 Info ← (:'ℹ ' Block) | (:'ℹ\n' (!'\n\n' (:'\n' | Block))*)
 Warning ← :'⚠ ' Block
