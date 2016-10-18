@@ -121,14 +121,16 @@ AdabruArticle = React.createClass do
         '¶'
       div do
         ref: 'blocks'
+        onMouseMove: @mouseMoved
         @props.items.map (item) ~>
-          props = {key: item.props.id, ref: item.props.id, onMouseEnter:(e) ~> @mouseEnteredChild e.target}
+          props = {key: item.props.id, ref: item.props.id}
           if typeof item.type is not 'string' then props.scrollToMe = ~> @scrollTo item.props.id
           React.cloneElement item, props
-  mouseEnteredChild: (c) ->
-    console.log c
-    @refs['pilcrow'].style.top = c.offsetTop + +window.getComputedStyle(c, null).getPropertyValue('padding-top').slice(0,-2)
-    @refs['pilcrow'].href = "\##{c.id}"
+  mouseMoved: (e) ->
+    for item in @props.items
+      d = ReactDOM.findDOMNode(@refs[item.props.id]) ; r = d.getBoundingClientRect! ; if r.top <= e.pageY <= r.bottom then break
+    @refs['pilcrow'].style.top = d.offsetTop + +window.getComputedStyle(d, null).getPropertyValue('padding-top').slice(0,-2)
+    @refs['pilcrow'].href = "\##{d.id}"
   scrollTo: (idOrIndex) ->
     element = switch
       case "string" is typeof idOrIndex and @refs[idOrIndex]?
