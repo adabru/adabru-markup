@@ -1,6 +1,6 @@
 ReactDOM = require 'react-dom'
 React = require 'react'
-{nav, li, a, ul, h1, h2, h3, p, div, br, article} = React.DOM
+{nav, li, a, ul, h1, h2, h3, p, div, br, article, span} = React.DOM
 require '@pleasetrythisathome/react.animate'
 _ = require 'lodash'
 
@@ -27,7 +27,6 @@ AdabruTableofcontents = React.createClass do
             className: if item.id == @props.highlightId then 'highlight'
             onClick: (event) ~>
               event.preventDefault!
-              console.log item.id
               @props.onItemClick event, item.id
             item.caption
         * if item.items?.length > 0
@@ -116,19 +115,31 @@ AdabruArticle = React.createClass do
                 last_view_height = view_height
             @props.onScrolled scrolledToItem.props.id
           @setState {scrollTop: event.target.scrollTop}
-      @props.items.map (item) ~>
-        props = {key: item.props.id, ref: item.props.id}
-        if typeof item.type is not 'string' then props.scrollToMe = ~> @scrollTo item.props.id
-        React.cloneElement item, props
+      a do
+        className: 'pilcrow'
+        ref: 'pilcrow'
+        '¶'
+      div do
+        ref: 'blocks'
+        @props.items.map (item) ~>
+          props = {key: item.props.id, ref: item.props.id, onMouseEnter:(e) ~> @mouseEnteredChild e.target}
+          if typeof item.type is not 'string' then props.scrollToMe = ~> @scrollTo item.props.id
+          React.cloneElement item, props
+  mouseEnteredChild: (c) ->
+    console.log c
+    @refs['pilcrow'].style.top = c.offsetTop + +window.getComputedStyle(c, null).getPropertyValue('padding-top').slice(0,-2)
+    @refs['pilcrow'].href = "\##{c.id}"
   scrollTo: (idOrIndex) ->
-    switch
-      | "string" is typeof idOrIndex and @refs[idOrIndex]?
-        @animate {scrollTop: @refs.scroll.scrollTop + ReactDOM.findDOMNode(@refs[idOrIndex]).getBoundingClientRect().top}, 500
-      | "string" is typeof idOrIndex and not @refs[idOrIndex]?
+    element = switch
+      case "string" is typeof idOrIndex and @refs[idOrIndex]?
+        ReactDOM.findDOMNode(@refs[idOrIndex])
+      case "string" is typeof idOrIndex and not @refs[idOrIndex]?
         console.warn 'There is no ref to a top-level element with id: "'+idOrIndex+'"! So no scrolling to it'
-      | "number" is typeof idOrIndex
-        @animate {scrollTop: @refs.scroll.scrollTop + ReactDOM.findDOMNode(this).children[idOrIndex].getBoundingClientRect().top}, 500
+      case "number" is typeof idOrIndex
+        ReactDOM.findDOMNode(@refs['blocks']).children[idOrIndex]
       default console.warn 'scrollTo accepts an id or an index'
+    if element?
+      @animate {scrollTop: @refs.scroll.scrollTop + element.getBoundingClientRect().top}, 500
 
 Object.assign exports ? this,
   AdabruTableofcontents: AdabruTableofcontents
