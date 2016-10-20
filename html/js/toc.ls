@@ -65,6 +65,9 @@ AdabruTableofcontents = React.createClass do
 AdabruArticle = React.createClass do
   displayName: '_Article'
   mixins: [React.Animate]
+  # setting scrollTop causes onScroll which is problematic
+  # see http://stackoverflow.com/questions/27512641
+  noscroll: 0
   getDefaultProps: ->
     items:
       h1({id: 'a'}, 'uov')
@@ -72,36 +75,29 @@ AdabruArticle = React.createClass do
       h2({id: 'c'}, 'ofgnf')
     scrollToCommand:
       id: 'b'
-      time: (new Date).getTime()
+      time: Date.now!
     onScrolled: (id) ->
       console.log 'onScrolled not assigned'
   getInitialState: ->
     scrollTop: 0
-    distant_view: false
-    distant_view_nomouse: false
-    cached_dom_props:
-      scroll_height: 0
-      blocks_height: 0
+    transformOrigin: 0
+    mouse_y: 0
+    ui_state: [0]
   componentDidMount: ->
     # global scrolling
     window.document.addEventListener 'wheel', (event) ~>
       if not event.ctrlKey
         event.preventDefault()
-        # if not @state.distant_view
-        @setState scrollTop: @state.scrollTop + event.deltaY >? 0 <? @refs.blocks.clientHeight - @refs.scroll.clientHeight
+        @setState scrollTop: @state.scrollTop + (event.deltaY * [1,5,1][@state.ui_state.0]) >? 0 <? @refs.blocks.clientHeight - @refs.scroll.clientHeight
     # global key handling
     window.document.addEventListener 'keydown', (event) ~>
-      if event.code is "KeyD" and not @state.distant_view
+      if event.code is "KeyD" and @state.ui_state.0 is 0
         @setState do
           scrollTop: @refs.scroll.scrollTop
-          distant_view: true
-          distant_view_nomouse: true
-          cached_dom_props:
-            scroll_height: @refs.scroll.getBoundingClientRect!.height
-            blocks_height: @refs.blocks.clientHeight
+          ui_state: [1,@state.mouse_y]
     window.document.addEventListener 'keyup', (event) ~>
       if event.code is "KeyD"
-        @setState distant_view:false
+        @setState ui_state: [0]
     # scroll to element defined in window.location.hash, after waiting a bit for document loading
     if (h=window.location.hash)?
       if h.startsWith '#:'
@@ -114,26 +110,74 @@ AdabruArticle = React.createClass do
       @scrollTo nextProps.scrollToCommand.id
   shouldComponentUpdate: (nextProps,nextState) ->
     # not update on mouse event (lags)
-    needs_scroll = @refs.scroll.scrollTop != nextState.scrollTop
-    switch
-      case nextState.distant_view and (@state.distant_view_nomouse and not nextState.distant_view_nomouse)
-        @animate {scrollTop: nextState.scrollTop}, 200
-      case nextState.distant_view and ((not @state.distant_view) or needs_scroll)
-        let sT = nextState.scrollTop, sH = nextState.cached_dom_props.scroll_height, bH = nextState.cached_dom_props.blocks_height
-          @refs.blocks.style.transformOrigin = "50% #{sT / (bH- sH) * bH}px"
-        fallthrough
-      case needs_scroll
-        @refs.scroll.scrollTop = nextState.scrollTop
-    if _.isEqual(@props, nextProps) and _.isEqual(@state{distant_view}, nextState{distant_view})
+    #
+    #  states
+    #  (0) normal scrolling / normal mousemove
+    #  (1) zoomed, mouse in crater
+    #  (2) zoomed, mouse freed
+    #
+    #  zoomed
+    #    point p ∊ [0, H] on pane, y ∊ [0, h] value in view, transform anchor a, scrollTop sT ∊ [0, H-h], mouse position my ∊ [0, h]
+    #    y(p,s,a,sT) = s * (p - a) + a - sT
+    #
+    p = (propname) ~> [@state[propname],nextState[propname]]
+    switch nextState.ui_state.0
+      case 0
+        [m0,m1] = p 'mouse_y' ; if m0 isnt m1 and m1 isnt -1
+          for item in @props.items
+            d = ReactDOM.findDOMNode(@refs[item.props.id]) ; r = d.getBoundingClientRect! ; if r.top <= m1 <= r.bottom then break
+          @refs['pilcrow']
+            ..style.top = d.offsetTop + +window.getComputedStyle(d, null).getPropertyValue('padding-top').slice(0,-2)
+            ..href = "\##{d.id}"
+        [s0,s1] = [@refs.scroll.scrollTop, nextState.scrollTop] ; if s0 != s1
+          @noscroll = Date.now! ; @refs.scroll.scrollTop = nextState.scrollTop
+      case 1
+        [m0,m1] = p 'mouse_y' ; switch
+          case nextState.ui_state.1 is -1, m1 is -1 then @setState ui_state: [1,m1]
+          case Math.abs(nextState.ui_state.1 - m1) > 10 then @setState ui_state: [2]
+        [s0,s1] = [@refs.scroll.scrollTop, nextState.scrollTop] ; if s0 != s1
+          @noscroll = Date.now! ; @refs.scroll.scrollTop = nextState.scrollTop
+        #  - y(p=0, sT=0) = 0
+        #  - y(p=H, sT=H-h) = h
+        #  - sT const
+        # → with linear interpolation a = sT / (H-h) * H
+        let {scrollTop:sT, mouse_y:my, transformOrigin:a} = nextState, h = @refs.scroll.clientHeight, H = @refs.blocks.clientHeight, s = 0.25
+          _a = sT / (H - h) * H
+          @setState transformOrigin:_a
+          if a isnt _a then @refs.blocks.style.transformOrigin = "50% #{_a}px"
+      case 2
+        #  - a = sT + my
+        #  - my, y(0) const
+        # → with CAS a' == (a*s - a + my + sT)/s, sT' == -(my*(s - 1) - a*s + a - sT)/s
+        let {scrollTop:sT, mouse_y:my, transformOrigin:a} = nextState, h = @refs.scroll.clientHeight, H = @refs.blocks.clientHeight, s = 0.25
+          # limiting sT
+          # y(0,s,a,sT_min) = 0   →   sT_min = s * -a + a
+          # y(H,s,a,sT_max) = h   →   sT_max = s * (H - a) + a - h
+          sT = sT >? s*-a + a <? s * (H - a) + a - h
+          y = (p,s,a,sT) -> s * (p - a) + a - sT
+          _a  = (a*s - a + my + sT)/s
+          _sT = -(my*(s - 1) - a*s + a - sT)/s
+          _sT = Math.round _sT
+          _a = Math.round _a
+          @setState scrollTop:_sT, transformOrigin:_a
+          # orig = @refs.blocks.style.display ; @refs.blocks.style.display = "none"
+          [a0,a1] = [+(/^[^ ]* ([0-9.]*)px/.exec(@refs.blocks.style.transformOrigin)?.1 ? 0), nextState.transformOrigin] ; if a0 != a1
+            @refs.blocks.style.transformOrigin = "50% #{_a}px"
+          [s0,s1] = [@refs.scroll.scrollTop, nextState.scrollTop] ; if s0 != s1
+            @noscroll = Date.now! ; @refs.scroll.scrollTop = nextState.scrollTop
+    if _.isEqual(@props, nextProps) and (@state.ui_state.0 is 0) == (nextState.ui_state.0 is 0)
       false
     else
       true
   render: ->
     article do
       ref: 'scroll'
-      onMouseMove: @mouseMoved
+      className: 'article_scroll'
+      onMouseMove: (e) ~> @setState mouse_y: e.pageY
+      onMouseLeave: ~> @setState mouse_y: -1
       onScroll: (event) ~>
         if event.target == @refs.scroll
+          event.preventDefault!
           if @props.onScrolled?
             viewport_height = ReactDOM.findDOMNode(this).getBoundingClientRect!.height
             for item in @props.items
@@ -142,33 +186,20 @@ AdabruArticle = React.createClass do
               if view_height > (last_view_height ? 0)
                 scrolledToItem = item
                 last_view_height = view_height
-            @props.onScrolled scrolledToItem.props.id
-          @setState {scrollTop: event.target.scrollTop}
+            if scrolledToItem? then @props.onScrolled scrolledToItem.props.id
+          if Math.abs(Date.now! - @noscroll) > 100
+            @setState {scrollTop: event.target.scrollTop}
       a do
         className: 'pilcrow'
         ref: 'pilcrow'
         '¶'
       div do
         ref: 'blocks'
-        className: if @state.distant_view then "distant_view" else ""
+        className: "blocks " + if @state.ui_state.0 in [1 2] then "distant_view" else ""
         @props.items.map (item) ~>
           props = {key: item.props.id, ref: item.props.id}
           if typeof item.type is not 'string' then props.scrollToMe = ~> @scrollTo item.props.id
           React.cloneElement item, props
-  mouseMoved: (e) ->
-    if @state.distant_view
-      scroll_height = @refs.scroll.getBoundingClientRect!.height
-      blocks_height = @refs.blocks.clientHeight
-      scrollTop = (e.pageY / scroll_height) * (blocks_height - scroll_height)
-      @setState do
-        scrollTop: scrollTop
-        distant_view_nomouse: false
-        cached_dom_props: {scroll_height, blocks_height}
-    else
-      for item in @props.items
-        d = ReactDOM.findDOMNode(@refs[item.props.id]) ; r = d.getBoundingClientRect! ; if r.top <= e.pageY <= r.bottom then break
-      @refs['pilcrow'].style.top = d.offsetTop + +window.getComputedStyle(d, null).getPropertyValue('padding-top').slice(0,-2)
-      @refs['pilcrow'].href = "\##{d.id}"
   scrollTo: (idOrIndex) ->
     element = switch
       case "string" is typeof idOrIndex and @refs[idOrIndex]?
@@ -181,6 +212,6 @@ AdabruArticle = React.createClass do
     if element?
       @animate {scrollTop: @refs.scroll.scrollTop + element.getBoundingClientRect().top}, 500
 
-Object.assign exports ? this,
+exports <<<
   AdabruTableofcontents: AdabruTableofcontents
   AdabruArticle: AdabruArticle
