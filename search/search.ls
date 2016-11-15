@@ -88,26 +88,39 @@ if process.argv.1.endsWith 'search.ls'
     \u001b[1musage\u001b[0m: search FILES
 
         -s <expr>   search in FILES for <expression>
-        -c <file>   write compiled parser to <file>, if <file>
-                    is not given, it is written to stdout
-        -d          enter debug mode even on success
         --help
 
     \u001b[1mExamples\u001b[0m
     search.ls ./test/a* ./test/b* -s 'some keywords'
 
     '''
+  if process.argv.2 in ["-h", "help", "-help", "--help", void] then return help!
 
-  # show help
   argv = minimist process.argv.slice(2), {}
-  if argv.help or argv._.length == 0
-    help!
-    return
 
   # wildcards
   files = flatten [glob p for p in argv._]
 
+  # setup search machine
   sm = search_machine!
   for f in files
+    log "adding \u001b[1m#{f}\u001b[0m to concordance..."
     sm.addDocument f, JSON.parse fs.readFileSync f, "utf8"
-  absh {sm} ; return
+  log "concordance has #{Object .keys(sm.conc) .map((i)->sm.conc[i].length) .reduce((a,x) -> a+x)} entries\n"
+
+  # execute search
+  colors = let e = ((e1,e2,s) --> "\u001b[#{e1}m#{s}\u001b[#{e2}m")
+      b = [] ; for i in [0 to 7] then b[i]=e("4#i","49") ; for i in [100 to 107] then b[i]=e(i,"49")
+      f = [] ; for i in [0 to 7] then f[i]=e("3#i","39") ; for i in [90 to 97] then f[i]=e(i,"39")
+      {f,b,inv:e('07','27'), pos:e('27','07'), bold:e('01',22), dim:e('02',22), reset:e('00','00')}
+  {dim,f,bold} = colors
+  pretty_print = (weight, s) ->
+    log "#{bold weight} #{s.context.map((cs) -> if cs? then f.3 cs.s else bold f.3 s.s) .join ' '} in #{dim path.basename s.filename} at #{dim s.i}"
+    true
+  if argv.s?
+    found = []
+    log "searching with #{f.1 sm.search that, ->false}"
+    sm.search that, (s) -> if not s? then false else pretty_print (sm.weight s, argv.s), (sm.beefed s)
+    return log "\n"
+
+  log "\naccess search machine with \u001b[1msm\u001b[0m" ; absh {sm} ; return

@@ -51,23 +51,22 @@ AdabruCode = React.createClass do
         numChars: 0
         flashState: 0
   componentDidMount: ->
-    setTimeout ~>
-      @highlightCode!
-      @setState do
-        clientHeight: ReactDOM.findDOMNode(this).clientHeight
-        contentHash: @hashCode @props.content
-  componentWillReceiveProps: (nextProps) ->
-    if @state.contentHash != @hashCode nextProps.content
-      # trigger new measurement
-      @setState clientHeight: 0
-  componentDidUpdate: ->
-    @highlightCode!
+    # https://highlightjs.org/usage/
+    <~ setTimeout _, 100
+    hljs.highlightBlock @refs["code"]
+    @setState do
+      clientHeight: @refs["code"].clientHeight
+      contentHash: @hashCode @props.content
+  componentDidUpdate: (prevProps, prevState) ->
     hash = @hashCode @props.content
     if @state.contentHash != hash
       # content changed
       @setState do
-        clientHeight: ReactDOM.findDOMNode(this).clientHeight
+        clientHeight: @refs["code"].clientHeight
         contentHash: hash
+    if not /hljs/.test @refs["code"].className
+      <~ setTimeout _, 100
+      hljs.highlightBlock @refs["code"]
   render: ->
     # copy-confirmation
     conf = span do
@@ -82,6 +81,7 @@ AdabruCode = React.createClass do
       pre do
         onMouseUp: @copyContent
         code do
+          ref: "code"
           className: @props.syntax
           @props.content
         textarea do
@@ -101,6 +101,7 @@ AdabruCode = React.createClass do
           div do
             className: 'code-fade'
           code do
+            ref: "code"
             className: @props.syntax
             @props.content
           textarea do
@@ -110,9 +111,6 @@ AdabruCode = React.createClass do
         button do
           onClick: @toggleCollapse
 
-  highlightCode: ->
-    # source: https://github.com/akiran/react-highlight/blob/master/src/index.jsx
-    hljs.highlightBlock ((ReactDOM.findDOMNode this).querySelector 'code')
   copyContent: (event) ->
     # copy to clipboard
     selection = window.getSelection().toString()
@@ -135,12 +133,9 @@ AdabruCode = React.createClass do
   toggleCollapse: (event) ->
     if not @state.folded
       @props.scrollToMe()
-      #         var scrollDiff = $('article').scrollTop() + $(self).offset().top - 50
-      #         $('article').animate({scrollTop: scrollDiff}, 400)
     @setState { folded: not @state.folded }
   hashCode: (str) ->
     str.length
 
-Object.assign exports ? this, {
+exports <<<
   AdabruCodeContainer: AdabruCodeContainer
-}

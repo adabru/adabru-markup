@@ -80,7 +80,7 @@ Hover_Content ← (!']' Span)+
 Link ↖ Link_Inline | Link_Reference | Link_Auto
 Link_Inline ← :'[' Link_Text :'](' Link_Url :')'
 Link_Reference ← :'[' Link_Text :'][]'
-Link_Auto ← :'<' (![ >] .)+ :'>'
+Link_Auto ← :'<' [^ ] [^>]* :'>'
 Link_Text ← (!']' Span)*
 Link_Url ← (![)\n] .)*
 

@@ -42,7 +42,7 @@ AdabruTableofcontents = React.createClass do
 
   statics:
     extractItemsFrom: (mingledItems) ->
-      buffer = [null, null, {items: []}, null, null]
+      buffer = let o={items: [items: []]} then [null, null, o, o.items.0, null]
       for item in mingledItems
         if item.type in ['h2', 'h3']
           level = parseInt item.type[1]
@@ -105,6 +105,9 @@ AdabruArticle = React.createClass do
         if index? then setTimeout (~> @scrollTo +index), 200
       else
         setTimeout (~> @scrollTo h.slice 1), 200
+    #
+
+    window.document.title = @props.items.find((i) -> i.type is "h1").props.children.0 ? "🖼"
   componentWillReceiveProps: (nextProps) ->
     if nextProps.scrollToCommand.time > @props.scrollToCommand.time
       @scrollTo nextProps.scrollToCommand.id
@@ -210,7 +213,7 @@ AdabruArticle = React.createClass do
         ReactDOM.findDOMNode(@refs['blocks']).children[idOrIndex]
       default console.warn 'scrollTo accepts an id or an index'
     if element?
-      @animate {scrollTop: @refs.scroll.scrollTop + element.getBoundingClientRect().top}, 500
+      @animate {scrollTop: @refs.scroll.scrollTop + element.getBoundingClientRect().top - 50 >? 0}, 500
 
 exports <<<
   AdabruTableofcontents: AdabruTableofcontents

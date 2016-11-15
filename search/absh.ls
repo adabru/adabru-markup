@@ -127,6 +127,17 @@ absh = (o) ->
 exports <<< {absh}
 
 if process.argv.1.endsWith 'absh.ls'
+  help = -> console.log '''
+
+
+    livescript repl implementation
+
+    terminal usage: \u001b[1mabsh.ls\u001b[0m
+    JS usage: \u001b[1mrequire("absh")(context)\u001b[0m
+
+    '''
+  if process.argv.2 in ["-h", "help", "-help", "--help"] then return help!
+
   i = 2
   let j = 3
     absh {j}

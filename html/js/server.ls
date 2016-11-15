@@ -30,7 +30,7 @@ catch e then ignore = /^$/
 filetree = (buildFileTree = (p) ->
   if fs.statSync(p).isDirectory!
     name: path.basename p
-    children: [buildFileTree "#p/#f" for f in fs.readdirSync(p).filter (f) -> not (ignore? and ignore.test f)]
+    children: [buildFileTree "#p/#f" for f in fs.readdirSync(p).filter (f) -> not (ignore? and ignore.test "#p/#f")]
   else
     name: path.basename p) docroot
 flattenTree = ((f,base) -> _p="#base/#{f.name}" ; if f.children? then flatten [flattenTree c,_p for c in f.children] else [_p])
@@ -135,6 +135,7 @@ server = http.createServer (req, res) ->
       s = """
         <head>
           <script src=\"/adabrumarkup.js\"></script>
+          <title>🖼</title>
           <link rel="stylesheet" type="text/css" href="/.adabru_markup/style.styl" />
         </head>
         <div id='app'>
