@@ -96,6 +96,8 @@ function search(rich_query, conc, callback)
         sum = 0
         x = []
         for i from 0 til rich_query.length
+          if i is 0 and frame_winner[f-1]?.a is 2**rich_query.length - 1
+            continue # same as in previous frame
           w = halfframe_winner[if 1 .&. (a .>>. i) then hf else hf-1]?[i]
           if not w? then continue combination
           sum += w.weight
