@@ -38,19 +38,17 @@ AdabruLinker = react.createClass do
             {}
             [buildFileItem c,"#baseurl/#name" for c in children]
 
-    buildSearchItem = ({s,weight,nt,i_ast,filename,context}, i) ->
+    buildSearchItem = ({weight,filename,context,keywords}, i) ->
       li do
         key: i
         a do
-          href: "#filename\##i_ast"
+          href: "#filename\##{context.0.i_ast}"
           span do
             className: "weight"
             weight
           div do
             className: "context"
-            [(if e? then span {key:j, className:that.nt}, "#{that.s} "
-              else       span {key:j, className:"hit #nt"}, "#s "
-            ) for e,j in context]
+            [(span {key:j, className:(if e.i in keywords then "hit " else "")+e.nt}, "#{e.s} ") for e,j in context]
           span do
             className: "filename"
             filename.split('/').reverse!.join(' ')
