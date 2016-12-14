@@ -33,14 +33,15 @@ function search(rich_query, conc, callback)
   expr = []
   for e in rich_query
     e .= replace(/[-_{}\n]/g '').toLowerCase!
+    esc = (r) -> r.replace /([.?$[\]()|^])/g, "\\$1"
     if e.length > 3
       # edit distance 1: /cat/ becomes /(c?.?at)|(ca?.?t)|(cat?.?)/
-      regex = ["(#{e.slice 0,i}?.?#{e.slice i})" for i from 1 to e.length]
+      regex = ["(#{esc e.slice 0,i}?.?#{esc e.slice i})" for i from 1 to e.length]
       # letter swaps: /cat/ becomes /(.ct)|(c.a)/
-      regex ++= ["(#{e.slice 0,i-1}#{e[i]}#{e[i-1]}#{e.slice i+1})" for i from 1 til e.length]
+      regex ++= ["(#{esc e.slice 0,i-1}#{esc e[i]}#{esc e[i-1]}#{esc e.slice i+1})" for i from 1 til e.length]
       expr ++= new RegExp regex.join '|'
     else
-      expr ++= new RegExp e.replace /([\.()])/g, "\\$1"
+      expr ++= new RegExp esc e
 
   # linear search on concordance
   #

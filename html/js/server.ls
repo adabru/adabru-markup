@@ -53,7 +53,7 @@ cache = (filepath) ->
   cachepath = "#docroot/.adabru_markup/cache/#{path.basename filepath}##{hash filepath}"
   try cachepath_mtime = fs.statSync(cachepath).mtime.getTime! catch e then cachepath_mtime = 0
   switch
-    case filepath is /\.(js|css|png|svg|jpg)$/
+    case filepath is /\.(js|css|png|svg|jpg|c)$/
       fs.createReadStream filepath
     case _cache[filepath]?.timestamp > fs.statSync(filepath).mtime.getTime!
       s = new stream.Readable {read:(->)} ; s.push _cache[filepath].content ; s.push null ; s
