@@ -80,6 +80,7 @@ AdabruArticle = React.createClass do
       console.log 'onScrolled not assigned'
   getInitialState: ->
     scrollTop: 0
+    lastScrollTime: 0
     transformOrigin: 0
     mouse_y: 0
     ui_state: [0]
@@ -88,7 +89,15 @@ AdabruArticle = React.createClass do
     window.document.addEventListener 'wheel', (event) ~>
       if not event.ctrlKey
         event.preventDefault()
-        @setState scrollTop: @state.scrollTop + (event.deltaY * [1,5,1][@state.ui_state.0]) >? 0 <? @refs.blocks.clientHeight - @refs.scroll.clientHeight
+        let t = @state.lastScrollTime, n = Date.now!
+          @setState lastScrollTime: n
+          # Chrome: filter out buggy monster scrolls after changing virtual desktops
+          if n - t > 1000
+            @setState lastScrollTime: n
+          else
+            @setState do
+              lastScrollTime: n
+              scrollTop: @state.scrollTop + (event.deltaY * [1,5,1][@state.ui_state.0]) >? 0 <? @refs.blocks.clientHeight - @refs.scroll.clientHeight
     # global key handling
     window.document.addEventListener 'keydown', (event) ~>
       if event.code is "KeyD" and @state.ui_state.0 is 0
