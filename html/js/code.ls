@@ -5,8 +5,8 @@ _ = require 'lodash'
 {div, code, span, pre, textarea, button} = React.DOM
 
 if process.env.BROWSER?
-  require '../css/code.css'
   require 'highlight.js/styles/xcode.css'
+  require '../css/code.styl'
 
 # container for async loading as suggested here:
 # http://andrewhfarmer.com/react-ajax-best-practices/
@@ -98,8 +98,6 @@ AdabruCode = React.createClass do
           style:
             height: if @state.folded then 200 else @state.clientHeight
           onMouseUp: @copyContent
-          div do
-            className: 'code-fade'
           code do
             ref: "code"
             className: @props.syntax

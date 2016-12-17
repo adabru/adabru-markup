@@ -10,24 +10,24 @@ nav
   z-index: 1
   box-sizing: border-box
   ul
-    padding: 0px 0px 0px 10px
-    border: 0px
-    margin: 0px
+    cursor: pointer
+    padding: 0
     list-style: none
-    background-color: #edd
-    li.highlight
-      text-shadow: 0 0 5px #70f, 0 0 3px #fff
     li
-      border-top: 1px solid #abb
-    li a
-      cursor: default
-    li:hover
-      background-color: #fff
-      border: 2px solid #fbf
-      padding: 5px
-    ul li
-      border: none
-      padding: 5px 0px
+      background: linear-gradient(to right, transparent 60%, #dde)
+      padding: 2px 0 2px 5px
+      &.highlight
+        background: linear-gradient(to right, #dde, transparent 40%)
+      a
+        cursor: default
+      &:hover
+        background: linear-gradient(to right, transparent, #dde)
+    ul
+      font-size: .8em
+      li
+        padding-left: 15px
+        border: none
+
 
 article
   position: relative

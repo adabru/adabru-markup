@@ -4,7 +4,7 @@ $ = require 'jquery'
 {h2, div, section, button, span} = React.DOM
 
 if process.env.BROWSER?
-  require '../css/slides.css'
+  require '../css/slides.styl'
 
 AdabruSlides = React.createClass do
   displayName: '_Slides'

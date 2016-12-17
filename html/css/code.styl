@@ -1,0 +1,95 @@
+
+div.code-wrapper
+  text-align: center
+  button
+    position: relative
+    z-index: 3
+    bottom: 30px
+    font-size: 14px
+  pre
+    text-align: left
+    position: relative
+    overflow: hidden
+    textarea
+      position: fixed
+      width: 1
+      height: 1
+      padding: 0
+      border: 0
+      margin: 0
+      display: block
+    code
+      position: relative
+      cursor: pointer
+    &:hover code::before
+      content: 'Auswählen oder Klicken zum Kopieren'
+      right: 5px
+      font-size: .8em
+      color: #bbb
+      height: .5em
+      line-height: 0
+      position: absolute
+    code:active
+      cursor: copy
+    &:before
+      position: absolute
+      content: ''
+      z-index: 2
+      background: transparent
+      width: 100%
+      height: 100%
+      bottom: 0
+      pointer-events: none
+      transition: all 1s ease
+      background: linear-gradient(to top, #f8f8ff, transparent)
+    &.collapsed + button::before
+      content: "ausrollen"
+    &.expanded
+      &:before
+        height: 0%
+      & + button::before
+        content: "einrollen"
+    &.collapsed, &.expanded
+      transition: all 1s ease
+
+
+
+code
+  font-family: monospace
+  font-size: 0.8em
+  color: #644
+
+pre code.hljs
+  padding-bottom: 30px
+
+
+
+
+.copyconfirmation
+  transform: translate(10px, -20px)
+  pointer-events: none
+  position: fixed
+  z-index: 1
+  color: #bbb
+  opacity: 0
+
+.copyconfirmation.flash1
+  animation: fader1 1s ease
+
+.copyconfirmation.flash2
+  animation: fader2 1s ease
+
+@keyframes fader1
+  0%
+    opacity: 100
+
+  100%
+    opacity: 0
+
+
+@keyframes fader2
+  0%
+    opacity: 100
+
+  100%
+    opacity: 0

@@ -1,0 +1,110 @@
+/*slides*/
+.slidewrap
+  margin: auto
+  width: 500px
+  height: 400px
+  margin: 20px auto
+  overflow: hidden
+  position: relative
+  &:focus
+    outline: 2px solid #844
+
+.slideplane
+  position: relative
+  width: 999999px
+  transition: all .2s linear
+  section
+    height: 400px
+    width: 500px
+    float: left
+    margin: 0 200px 100px 0
+    background-color: #fff
+    overflow: auto
+    box-sizing: border-box
+  .multislide
+    overflow: visible
+  p
+    padding: 0px
+  h3
+    padding-top: 20px
+    text-align: center
+
+/*progress*/
+.progress-div
+  position: absolute
+  bottom: 0
+  right: 0
+.progress-current
+  font-size: 1.5em
+  color: #844
+  font-weight: bold
+.progress-total
+  font-size: 1em
+  color: #666
+  font-weight: bold
+
+
+/*navigation*/
+.slidewrap:hover .navigation-div
+  display: block
+
+.navigation-div
+  display: none
+  position: absolute
+  width: 70px
+  height: 70px
+  left: 10px
+  bottom: 10px
+
+.navigation-arrow
+  width: 0px
+  height: 0px
+  padding: 0px
+  cursor: pointer
+  border: 0px solid transparent
+  background-color: transparent
+  position: absolute
+  transition: all .2s
+
+
+.navigation-up.enabled:hover
+  border-top-color: #8dcffc
+.navigation-down.enabled:hover
+  border-top-color: #8dcffc
+.navigation-left.enabled:hover
+  border-right-color: #8dcffc
+.navigation-right.enabled:hover
+  border-left-color: #8dcffc
+
+.navigation-arrow.disabled
+  opacity: 0.2
+  cursor: default
+
+
+.navigation-up
+  border-bottom-color: #42affa
+  border-width: 0px 10px 0px 10px
+  border-bottom-width: 22px
+  top: 0px
+  left: calc(50% - 11px)
+
+.navigation-down
+  border-top-color: #42affa
+  border-width: 0px 10px 0px 10px
+  border-top-width: 22px
+  bottom: 0px
+  left: calc(50% - 11px)
+
+.navigation-left
+  border-right-color: #42affa
+  border-width: 10px 0px 10px 0px
+  border-right-width: 22px
+  left: 0px
+  top: calc(50% - 11px)
+
+.navigation-right
+  border-left-color: #42affa
+  border-width: 10px 0px 10px 0px
+  border-left-width: 22px
+  right: 0px
+  top: calc(50% - 11px)

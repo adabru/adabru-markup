@@ -4,6 +4,10 @@ ReactDOMServer = require 'react-dom/server'
 ab_markup_grammar = require './build/ab_markup_grammar.json'
 abpv1 = require '../../parser/abpv1.js'
 
+if process.env.BROWSER?
+  require '../css/reset.css'
+  require '../css/core.styl'
+  require '../css/block.styl'
 
 {span, nav, li, a, ol, ul, h1, h2, h3, p, div, br, strong, em, code, kbd, img, table, tbody, tr, th, td, iframe} = React.DOM
 
@@ -16,11 +20,6 @@ abpv1 = require '../../parser/abpv1.js'
 {AdabruLinker} = require './linker.ls'
 window? <<< {React, ReactDOM, abpv1, grammar: ab_markup_grammar
   ,AdabruPage, AdabruTableofcontents, AdabruArticle, AdabruFiletree, AdabruCodeContainer, AdabruSlides, AdabruFactsheet, AdabruFit}
-
-if process.env.BROWSER?
-  require '../css/reset.css'
-  require '../css/core.css'
-  require '../css/block.styl'
 
 AdabruPage = React.createClass do
   displayName: '_Page'
