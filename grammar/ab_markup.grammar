@@ -54,7 +54,7 @@ Table_Body_Row_Item ← :'|'? Table_Colspan? (&(' ' | [^\n|] | '\n'+ '  ') :' '?
 Table_Colspan ← '|'+
 
 Info ← (:'ℹ ' Block) | (:'ℹ\n' (!'\n\n' (:'\n' | Block))*)
-Warning ← :'⚠ ' Block
+Warning ← (:'⚠ ' Block) | (:'⚠\n' (!'\n\n' (:'\n' | Block))*)
 
 Factsheet ← :'📍' (:' '? Factsheet_Thing)? :'\n' Factsheet_Facts?
 Factsheet_Thing ← (!'\n' Span)*
@@ -97,7 +97,7 @@ Technical ↖ Apielement | Keystroke | Path | Code | Terminal
 Apielement ← :'@' [^ \n]+
 Keystroke ← :'⌨' (Key :' '?)+
 Key ← [^  \n]+
-Path ← :'↑' (![ \n] Span)+
+Path ← :'↑' (Fit | [^ \n])+
 Code ← :'`' [^`\n]+ :'`'
 Terminal ← :'└▪' [^↵\n]+ :'↵'
 
