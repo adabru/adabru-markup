@@ -1,11 +1,7 @@
 nav
-  left: 0px
   width: 160px
   max-width: 160px
   height: 100%
-  padding: 0px
-  border: 0px
-  margin: 0px
   flex: 1 6 20%
   z-index: 1
   box-sizing: border-box
@@ -28,19 +24,42 @@ nav
         padding-left: 15px
         border: none
 
-
 article
+  background-color #f8f8ff
+  box-shadow 0px 0px 100px 100px #f8f8ff
+  padding: 0px 10px
+  width: 150px
+  max-width: 800px
+  margin: 0 auto
+  flex: 3 1 60%
   position: relative
-  .pilcrow
-    display: block
-    width: 0
-    height: 0
-    position: relative
-    color: rgba(1,1,1,.1)
-    &:hover
-      color: rgba(1,1,1,1)
-  div
-    transition-duration: .5s
-    transition-property: transform
-  div.distant_view
+  .article_scroll
+    height: 100%
+    overflow: auto
+    .pilcrow
+      display: block
+      width: 0
+      height: 0
+      position: relative
+      color: rgba(1,1,1,.1)
+      &:hover
+        color: rgba(1,1,1,1)
+    .blocks
+      transition-duration: .5s
+      transition-property: transform
+      width: calc(100% - 20px)
+  &.distant_view .blocks
     transform: scale(.25)
+  .zoom_guide
+    width: 100%
+    height: 100%
+    position: absolute
+    left: 0px
+    top: 0px
+    background-color: rgba(green, 0)
+    pointer-events: none
+    transition-duration: .5s
+    box-sizing: border-box
+  &.distant_view .zoom_guide
+    transform: scaleY(.25)
+    background-color: rgba(green, .05)
