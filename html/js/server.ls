@@ -17,7 +17,7 @@ colors = let e = ((e1,e2,s) --> "\u001b[#{e1}m#{s}\u001b[#{e2}m")
     f = [] ; for i in [0 to 7] then f[i]=e("3#i","39") ; for i in [90 to 97] then f[i]=e(i,"39")
     {f,b,inv:e('07','27'), pos:e('27','07'), bold:e('01',22), dim:e('02',22), reset:e('00','00')}
 
-hostname = '127.0.0.1'
+hostname = args.host ? args.h ? '127.0.0.1'
 port = args.port ? args.p ? 5555
 serverroot = path.dirname process.argv.1
 docroot = args.dir ? args.d ? '.'

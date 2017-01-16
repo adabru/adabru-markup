@@ -28,8 +28,8 @@ AdabruSlides = React.createClass do
   }
   componentDidMount: ->
     @setState do
-      slideWidth: @refs['0-0'].clientWidth + parseInt($(@refs['0-0']).css('margin-right'))
-      slideHeight: @refs['0-0'].clientHeight + parseInt($(@refs['0-0']).css('margin-bottom'))
+      slideWidth: @refs['0-0'].offsetWidth + parseInt($(@refs['0-0']).css('margin-right'))
+      slideHeight: @refs['0-0'].offsetHeight + parseInt($(@refs['0-0']).css('margin-bottom'))
   render: ->
     buildSlide = (element, x, y) ~>
       if not y?
