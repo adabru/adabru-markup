@@ -1,5 +1,21 @@
 #!/usr/bin/env lsc
 
+help = -> console.log '''
+
+
+  \u001b[1musage\u001b[0m: server [options]
+
+      --bind, -b <ip>            listen on address ip (default 127.0.7.1)
+      --port, -p <port>          listen on port port  (default 7000)
+      --dir, -d <directory>      serve files contained in directory
+      --help
+
+  \u001b[1mExamples\u001b[0m
+  ch.ls ./test/a* ./test/b* -s 'some keywords'
+
+  '''
+if process.argv.2 in ["-h", "help", "-help", "--help", void] then return help!
+
 require! [http,fs,util,url,path,stream]
 require! [minimist, stylus]
 adabruMarkup = require './core.ls'
@@ -17,8 +33,8 @@ colors = let e = ((e1,e2,s) --> "\u001b[#{e1}m#{s}\u001b[#{e2}m")
     f = [] ; for i in [0 to 7] then f[i]=e("3#i","39") ; for i in [90 to 97] then f[i]=e(i,"39")
     {f,b,inv:e('07','27'), pos:e('27','07'), bold:e('01',22), dim:e('02',22), reset:e('00','00')}
 
-hostname = args.host ? args.h ? '127.0.0.1'
-port = args.port ? args.p ? 5555
+hostname = args.bind ? args.b ? '127.0.7.1'
+port = args.port ? args.p ? 7000
 serverroot = path.dirname process.argv.1
 docroot = args.dir ? args.d ? '.'
 
@@ -66,7 +82,7 @@ cache = (filepath) ->
     default
       s = new stream.Readable {read:(->)}
       writeAndStore = (d) ->
-        s.push _cache[filepath].content = d ; s.push null ; fs.writeFile "#docroot/.adabru_markup/cache/#{path.basename filepath}##{hash filepath}", d
+        s.push _cache[filepath].content = d ; s.push null ; fs.writeFile "#docroot/.adabru_markup/cache/#{path.basename filepath}##{hash filepath}", d, (->)
       filecontent = ''
       fs.createReadStream filepath
         ..on 'error', -> s.emit 'error', new Error "error reading file #filepath"

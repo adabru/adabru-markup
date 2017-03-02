@@ -60,6 +60,7 @@ absh = (o) ->
           try
             write '\n'
             c = livescript.compile buf.content, {+bare, -header}
+            global.require = require
             print vm.runInThisContext c
           catch e then log e
           if history.entries[*-1] isnt buf.content then history.entries.push buf.content
