@@ -138,7 +138,7 @@ AdabruArticle = React.createClass do
           for item in @props.items
             d = ReactDOM.findDOMNode(@refs[item.props.id]) ; r = d.getBoundingClientRect! ; if r.top <= m1 <= r.bottom then break
           @refs['pilcrow']
-            ..style.top = d.offsetTop + +window.getComputedStyle(d, null).getPropertyValue('padding-top').slice(0,-2)
+            ..style.top = d.offsetTop + (+window.getComputedStyle(d, null).getPropertyValue('padding-top').slice(0,-2))
             ..href = "\##{d.id}"
         [s0,s1] = [@refs.scroll.scrollTop, nextState.scrollTop] ; if s0 != s1
           @noscroll = Date.now! ; @refs.scroll.scrollTop = nextState.scrollTop
