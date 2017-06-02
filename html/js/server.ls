@@ -49,8 +49,11 @@ filetree = (buildFileTree = (p) ->
     children: [buildFileTree "#p/#f" for f in fs.readdirSync(p).filter (f) -> not (ignore? and ignore.test "#p/#f")]
   else
     name: path.basename p) docroot
+ |> omitEmpty = (f) -> if not f.children? then f else
+      {f.name, children:f.children.filter((c)->not (c.children?.length == 0)).map(omitEmpty)}
 flattenTree = ((f,base) -> _p="#base/#{f.name}" ; if f.children? then flatten [flattenTree c,_p for c in f.children] else [_p])
 allfiles = flattenTree filetree, path.dirname docroot
+absh {allfiles, flattenTree, filetree}
 
 searcher = search_machine!
 
