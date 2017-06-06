@@ -58,7 +58,7 @@ searcher = search_machine!
 
 route = (href) ->
   request = url.parse href, true
-  p = unescape request.pathname
+  p = decodeURI request.pathname
   switch
     case p is '/' then p = '' ; request.localpath = docroot
     case p is '/adabrumarkup.js' then request.localpath = "#serverroot/build#p" ; request.query.download = true
@@ -122,6 +122,7 @@ for f in allfiles
 
 server = http.createServer (req, res) ->
   {p,lp,q} = route req.url
+  if p.endsWith '/' then p = p.slice 0,-1
   (err, stats) <- fs.stat lp, _
   switch
     case p is "/aaa"
