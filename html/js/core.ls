@@ -2,7 +2,7 @@ React = require 'react'
 ReactDOM = require 'react-dom'
 ReactDOMServer = require 'react-dom/server'
 ab_markup_grammar = require './build/ab_markup_grammar.json'
-abpv1 = require '../../parser/abpv1.js'
+abp = require 'adabru-parser'
 
 if process.env.BROWSER?
   require '../css/reset.css'
@@ -18,7 +18,7 @@ if process.env.BROWSER?
 {AdabruFactsheet} = require './factsheet.ls'
 {AdabruFit} = require './span.ls'
 {AdabruLinker} = require './linker.ls'
-window? <<< {React, ReactDOM, abpv1, grammar: ab_markup_grammar
+window? <<< {React, ReactDOM, abp, grammar: ab_markup_grammar
   ,AdabruPage, AdabruTableofcontents, AdabruArticle, AdabruFiletree, AdabruCodeContainer, AdabruSlides, AdabruFactsheet, AdabruFit}
 
 AdabruPage = React.createClass do
@@ -72,7 +72,7 @@ adabruMarkup =
         fulfill @printDocument ast, domNode
 
   parseDocument: (document, startNT='Document') ->
-    abpv1.parse document, ab_markup_grammar, {startNT:startNT}
+    abp.parse document, ab_markup_grammar, {startNT:startNT}
 
   printDocument: (ast, domNode) ->
     printedTree = @printTree ast

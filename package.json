@@ -28,6 +28,7 @@
   "homepage": "https://github.com/adabru/adabru-markup#readme",
   "dependencies": {
     "@pleasetrythisathome/react.animate": "http://github.com/pleasetrythisathome/react.animate/tarball/master",
+    "adabru-parser": "http://github.com/adabru/adabru-parser/tarball/master",
     "highlight.js": "^9.2.0",
     "lodash": "^4.8.2",
     "react": "^15",

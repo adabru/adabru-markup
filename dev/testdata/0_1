@@ -1,0 +1,235 @@
+[TOC]
+
+## IntelliJ IDEA
+
+### IDEA Setup
+
+- Download&Extract, <https://www.jetbrains.com/idea/>
+- Create Launcher
+- `java` must point to a jdk-installation
+
+- `Settings` → `Build, Execution, Deployment` → `Compiler` → `✔ Build project automatically`
+
+### `YourKit Java Profiler™` Integration
+
+Setup YourKit:
+
+- Download&Extract, <https://www.yourkit.com/java/profiler/download/>
+- Enter license key
+- Create Launcher
+
+Create new Run Configuration 'role-sdk profiler':
+
+- Using YourKit-IDEA-plugin with executing jar or bash sadly does not work, it says: "You can profile Java SE and Java EE applications and applets." <https://www.yourkit.com/docs/java/help/idea.jsp>
+
+Path to JAR
+/home/adabru/Desktop/i5-Projekt/ROLE/role-sdk/assembly/target/role-m10-sdk/webapps/jetty-runner.jar
+
+VM options
+-agentpath:/home/adabru/Portable/Shared/Applications/Profiler/yjp-2016.02/bin/linux-x86-64/libyjpagent.so -Djetty.host=127.0.0.1 -Djetty.port=8073
+
+Program arguments
+--port 8073 ../webapps/role-uu-prototype --path /role ../
+
+Working directory
+assembly/target/role-m10-sdk/bin
+
+✔ Single instances only
+
+### Interactive Shell
+
+IDEA implements `Groovy`
+
+- Tools → Groovy Console...
+- e.g.
+
+  ```java
+
+  import se.kth.csc.kmr.conserve.security.oauth2.OAuth2Endpoints;
+  OAuth2Endpoints oa2e = new OAuth2Endpoints();
+
+  println(oa2e);
+  println(oa2e.randomString());
+  ```
+- ⌨Ctrl Enter (Run Groovy)
+
+After making change to ↑*.java :
+
+- ⌨Ctrl Shift F9 `Compile`
+- ⌨Ctrl F2 stop Groovy
+- ⌨Ctrl Enter
+
+Problem with @Guice and @Inject
+
+### Groovy Unit Test
+
+- Create folder ↑test/ as brother of ↑src/
+- ⌨Ctrl Shift T (`Test`) → `Create New Test…`
+
+More resources:
+
+- official testing guide: <http://docs.groovy-lang.org/docs/latest/html/documentation/core-testing-guide.html>
+- <https://dzone.com/articles/writing-unit-tests-using-groov>
+
+## Java Setup
+
+### Single Oracle Installation
+
+- oracle jdk/jre
+  - dowload from http://www.oracle.com/technetwork/java/javase/downloads
+  - extract↑jre-….tar.gz
+    ⚠the ↑*.rpm and the ↑*.exe versions require further processing with unpack200
+  - └▪sudo ln -s <jre_root>/bin/java /usr/bin/java↵
+
+### Version auswählen
+
+3.3.2016
+Um in Ubuntu eine Java-Version auszuwählen:
+
+```bash
+sudo update-alternatives --config java
+sudo update-alternatives --config javac
+```
+
+To add Oracle-JDK:
+
+```
+sudo update-alternatives --install /usr/bin/java java ~/Portable/Shared/Applications/Runtimes/Java/Linux/jre1.6.0_45/bin/java 4000
+sudo update-alternatives --install /usr/bin/java java ~/Portable/Shared/Applications/Runtimes/Java/Linux/jre1.7.0_79/bin/java 4000
+sudo update-alternatives --install /usr/bin/java java ~/Portable/Shared/Applications/Runtimes/Java/Linux/jre1.8.0_45/bin/java 4000
+sudo update-alternatives --install /usr/bin/java java ~/Portable/Shared/Applications/Compiler/JDK/Ubuntu/jdk1.7.0_80/bin/java 4000
+sudo update-alternatives --install /usr/bin/java java ~/Portable/Shared/Applications/Compiler/JDK/Ubuntu/jdk1.8.0_25/bin/java 4000
+
+sudo update-alternatives --install /usr/bin/javac javac ~/Portable/Shared/Applications/Compiler/JDK/Ubuntu/jdk1.7.0_80/bin/javac 4000
+sudo update-alternatives --install /usr/bin/javac javac ~/Portable/Shared/Applications/Compiler/JDK/Ubuntu/jdk1.8.0_25/bin/javac 4000
+```
+
+To add OpenJDK:
+
+```
+sudo apt-get install openjdk-8-jre
+sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/java-1.8.0-openjdk-amd64/bin/java 4000
+```
+
+### Java API
+
+Documentation for Java SE and Java EE is on <http://docs.oracle.com/javase/8/docs/api/> and <https://docs.oracle.com/javaee/7/api/> download with └▪wget -r [url]↵
+
+## Build environments
+
+### Ivy
+
+If some jars defined as dependency, adding type `bundle` to `ivy:retrieve` task my be necessary.
+
+## Other
+
+### JDBC
+
+List tables of a database:
+
+```java
+con = DriverManager.getConnection(jdbcUrl, jdbcLogin, jdbcPass);
+ResultSet rs = con.getMetaData().getTables(null, null, "%", null);
+while(rs.next()) System.out.println(rs.getString(2)+" "+rs.getString(3));
+```
+
+[list of jdbc clients](http://h2database.com/html/links.html#tools), I chose [@execute Query](http://executequery.org/downloada)
+
+### H2
+
+[auto uppercasing problem:](http://stackoverflow.com/a/17530386/6040478) table and schema names should be taken into quotes, as h2 has default option `jdbc:h2:mem:./test;DATABASE_TO_UPPER=false`
+
+[erased entries problem:](http://stackoverflow.com/a/5936988/6040478) in-memory database is erased when last connection is closed, to avoid set option `jdbc:h2:mem:test;DB_CLOSE_DELAY=-1`
+
+backup and restore with the [`SCRIPT`](http://h2database.com/html/grammar.html#script) command, `SCRIPT TO 'database/backup.sql'`, restore with `RUNSCRIPT FROM 'database/backup.sql'`
+
+use in memory servermode for debugging:
+
+```
+Server server = Server.createTcpServer("-tcpPort", "9123").start();
+DriverManager.getConnection(
+  "jdbc:h2:tcp://localhost:9123/mem:test;DB_CLOSE_DELAY=-1", "sa", "");
+```
+
+When starting h2 tcp server in JUnit test with IDEA debugger, the server gets paused and no connection is possible. To use it nevertheless, it must be started separately, e.g. └▪java -cp h2*.jar org.h2.tools.Server -tcp↵ or when in @IDEA , with a run configuration.
+
+### MySQL
+
+ivy dependency:
+
+```
+<dependency org="mysql" name="mysql-connector-java" rev="6.0.5"/>
+```
+
+### JSON
+
+Official Java EE library is `javax.json`. It has a strong streaming API, but is inconvenient for usage inside the program (see [¹](http://www.journaldev.com/2315/java-json-example#comment-28659)). Inside the program I'll use `Map`. E.g. changing a number in an existing `JsonObject` is not possible
+
+## Snippets
+
+|
+|delete folder|
+  ```
+  private static boolean deleteDir(File dir) {
+      if (dir.isDirectory()) {
+          String[] children = dir.list();
+          for (int i = 0; i < children.length; i++) {
+              boolean success = deleteDir(new File(dir, children[i]));
+              if (!success) {
+                  return false;
+              }
+          }
+      }
+
+      return dir.delete(); // The directory is empty now and can be deleted.
+  };
+
+  …
+  deleteDir(new File("./tmp"));
+  ```
+|setting variables in sql statements|
+  ```
+  // without
+  Statement stmt = con.createStatement( );
+  stmt.executeQuery("SELECT * FROM files");
+
+  // with
+  PreparedStatement pstmt = getConnection().prepareStatement(sql);
+  for (int i=0 ; i<arguments.length ; i++)
+      pstmt.setObject(i+1, arguments[i]);
+  pstmt.executeQuery();
+  ```
+|`String` to `InputStream`[¹](http://stackoverflow.com/a/782183/6040478) and vice versa [²](http://stackoverflow.com/a/35446009/6040478)|
+  ```
+  InputStream is = new ByteArrayInputStream("Holla die \n Waldfee!".getBytes("utf-8"));
+  new Scanner(is).useDelimiter("\\A").next();
+  ```
+|`String` to hex format[¹](http://stackoverflow.com/a/2149927/6040478)|
+  ```java
+  String arg = "abc";
+  String.format("%040x", new BigInteger(1, arg.getBytes("utf-8")));
+  ```
+|JUnit™ regex matcher|
+  ```
+  static class RegexMatcher extends TypeSafeMatcher<String> {
+      Pattern p;
+      public RegexMatcher(String regex){p=Pattern.compile(regex);}
+      @Override public boolean matchesSafely(String s) {return p.matcher(s).matches();}
+      @Override public void describeTo(Description description){description.appendValue(p);}
+  }
+
+  …
+  // usage:
+  assertThat("wrong cid", cid2, new RegexMatcher("[0-9a-f]{15,}+"));
+  ```
+|`java.util.logging` custom formatter|
+  ```
+  ```↑ ./de/adabru/JULConfig.java?download
+
+  then
+
+  ```
+  javac de/adabru/*.java
+  jar cf adabru.jar de/adabru/*
+  java -Djava.util.logging.config.class=de.adabru.JULConfig -cp adabru.jar de.adabru.JULConfig
+  ```

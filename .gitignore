@@ -5,14 +5,9 @@ adabrumarkup.js.map
 *~
 .hidden
 
-parser/*.js
-parser/test/
-parser/bootstrap/
-parser/feature/
-parser/build/
-
 html/js/build
 
-dev/grammar_test.oracle
+dev/testdata/*.oracle
+dev/testdata/*.json
 
 search/test/

@@ -43,28 +43,28 @@ Downloading zip from https://github.com/adabru/adabru-markup and extracting.
 
 ### Setup
 
-└▪git clone git://github.com/adabru/adabru-markup↵
-└▪cd adabru-markup↵
-└▪npm install↵
-- compiling livescript for faster parsing when they are used
-  └▪lsc -c ./parser/*.ls↵
-└▪./parser/generator.ls ./grammar/ab_markup.grammar -c ./html/js/build/ab_markup_grammar.json↵
-└▪webpack --config ./html/webpack.config.js --watch --devtool sourcemap↵
+- └▪git clone git://github.com/adabru/adabru-markup↵
+- └▪cd adabru-markup↵
+- └▪npm install↵
+- `adabru-parser` is installed from github at the moment
+  - └▪(cd node-modules/adabru-parser && npm install)↵
+- └▪abp -g ./grammar/ab_markup.grammar -o ./html/js/build/ab_markup_grammar.json↵
+- └▪abp verify ./dev/testdata 0 0 --init ↵
+- └▪abp verify ./dev/testdata 0 1 --init ↵
+- └▪webpack --config ./html/webpack.config.js --watch --devtool sourcemap↵
 
 - prepare tests
-└▪chmod +x ./dev/*ls ./dev/*sh↵
-└▪./dev/grammar_test.ls --create-oracle↵
+- └▪./dev/grammar_test.ls --create-oracle↵
 
 ### Testing
 
-- start test server on 'localhost:133'
-  └▪php -e -S 127.0.0.1:3456 -t ./dev↵
-
 - grammar modification
-  └▪./dev/grammar_test.ls↵
+  - └▪abp -g ./grammar/ab_markup.grammar -o ./html/js/build/ab_markup_grammar.json↵
+  - └▪abp verify ./dev/testdata 0 0↵
+  - └▪abp verify ./dev/testdata 0 1↵
 
-- benchmarks
-  └▪./dev/benchmark_test.js↵
+- benchmark grammar
+  └▪abp bench ./dev/testdata 0 2↵
 
 - React components in browser
   in browser console: 'ReactDOM.render(React.createElement(AdabruArticle),document.querySelector("#app"))'
