@@ -103,7 +103,7 @@ Terminal ← :'└▪' [^↵\n]+ :'↵'
 
 Iframe ← :'⎡' [^ \n]+
 
-Brand ← [a-zA-Z0-9 ]+ :'™'
+Brand ← [a-zA-Z0-9 #]+ :'™'
 
 Info_Span ← :'ℹ' ![ \n] (!'\n' Span)+
 Warning_Span ← :'⚠' ![ \n] (!'\n' Span)+
