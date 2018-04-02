@@ -166,9 +166,8 @@ adabruMarkup =
         React.createElement( AdabruCodeContainer, {
           syntax: @printChild(ast, 'Codelanguage')
           import: if (c=@getChild(ast, 'Codeimport'))?
-            c.children.map (cc) ->
-              if cc.name != 'Codeimport_Option' then console.log 'warning: "Codeimport_Option" expected but got '+cc.name
-              cc.children.join('')
+            url: @printTree c.children.splice(0,1).0
+            options: c.children.map (cc) -> cc.children.join('')
           content: if (c=@getChild(ast, 'Codeinline'))?
             c.children.join('')
         })
@@ -215,6 +214,13 @@ adabruMarkup =
 
       # spans
 
+      case 'Rawurl'
+        url = ast.children.join('')
+        if /^http[s]:\/\// isnt url
+          # relative
+          (new URL url, "#{location.origin}/raw#{location.pathname}").href
+        else url
+
       case 'Hover'
         span do
           className: 'hover_span'
@@ -230,7 +236,7 @@ adabruMarkup =
         a({href: url}, url)
       case 'Emphasis_Italic' then em({},   @printChildren(ast))
       case 'Emphasis_Bold' then strong({},   @printChildren(ast))
-      case 'Image' then img({src: @printChild(ast, 'Image_Url'), alt: @printChild(ast, 'Image_Alt')})
+      case 'Image' then img({src: @printChild(ast, 'Rawurl'), alt: @printChild(ast, 'Image_Alt')})
       case 'Apielement' then span({className: 'apielement'},    @printChildren(ast))
       case 'Keystroke' then kbd({},   @printChildren(ast))
       case 'Key' then span({className: 'keystroke'}, ast.children[0])

@@ -23,7 +23,7 @@ AdabruLinker = react.createClass do
     searchResult: []
   componentDidUpdate: (_props, _state) ->
     if _state.search isnt @state.search
-      fetch "#{@props.searchurl}?#{@state.search}", method: 'get'
+      fetch "#{@props.searchurl}?q=#{@state.search}", method: 'get'
       .then (r) -> if r.ok then r.text!
       .then (data) ~> if data? then @setState searchResult:JSON.parse data
   render: ->

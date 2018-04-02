@@ -56,23 +56,12 @@ allfiles = flattenTree filetree, path.dirname docroot
 
 searcher = search_machine!
 
-route = (href) ->
-  request = url.parse href, true
-  p = decodeURI request.pathname
-  switch
-    case p is '/' then p = '' ; request.localpath = docroot
-    case p is '/adabrumarkup.js' then request.localpath = "#serverroot/build#p" ; request.query.download = true
-    case p.startsWith '/.adabru_markup' then  request.query.download = true ; fallthrough
-    default then request.localpath = "#docroot#p"
-  {p,lp:request.localpath,q:request.query}
-
+# only parsed files are cached (no images, scripts, …)
 _cache = {}
 cache = (filepath) ->
   cachepath = "#docroot/.adabru_markup/cache/#{path.basename filepath}##{hash filepath}"
   try cachepath_mtime = fs.statSync(cachepath).mtime.getTime! catch e then cachepath_mtime = 0
   switch
-    case filepath is /\.(js|css|png|svg|jpg|java|c|m|sage|cson)$/
-      fs.createReadStream filepath
     case _cache[filepath]?.timestamp > fs.statSync(filepath).mtime.getTime!
       s = new stream.Readable {read:(->)} ; s.push _cache[filepath].content ; s.push null ; s
     case  cachepath_mtime > fs.statSync(filepath).mtime.getTime!
@@ -121,19 +110,32 @@ for f in allfiles
         catch e then log "#{colors.bold path.basename f} could not be parsed properly"
 
 server = http.createServer (req, res) ->
-  {p,lp,q} = route req.url
-  if p.endsWith '/' then p = p.slice 0,-1
-  (err, stats) <- fs.stat lp, _
+  # route
+  {pathname, query} = url.parse req.url, true
+  p = decodeURI pathname
+  r = RegExp
+  not_found = -> res.writeHead 404 ; res.end "file #p not found!"
+  serv_err = (e) ->
+    console.error e
+    res.statusCode = 500 ; res.end "server error, sorry!"
+  pipe_stream = (contenttype, build_stream) ->
+    try
+      # implicit header
+      res.statusCode = 200 ; res.setHeader 'Content-Type', "#contenttype; charset=utf-8"
+      build_stream!
+        ..on 'error', (e) -> if e.code is 'ENOENT' then not_found! else serv_err e
+        ..pipe res
+    catch e then serv_err e
+
   switch
-    case p is "/aaa"
+    | '/aaa' is p
       res.writeHead 200, {'Content-Type': 'text/html; charset=utf-8'}
       res.end('Du!')
-    case p is "/search"
+    | '/search' is p
       res.writeHead 200, {'Content-Type': 'application/json; charset=utf-8'}
-      expr = Object.keys(q).0
-      if not expr? then return res.end JSON.stringify []
+      if not query.q? then return res.end JSON.stringify []
       findings = []
-      f <- searcher.search expr, _
+      f <- searcher.search query.q, _
       if f? then findings ++= f ; findings.length < 1000
       else
         filtered_findings = []
@@ -144,44 +146,48 @@ server = http.createServer (req, res) ->
         for f,i in filtered_findings
           filtered_findings[i] = searcher.beefed f
         res.end JSON.stringify filtered_findings
-    case err?
-      res.writeHead 404 ; res.end!
-    case stats.isDirectory!
-      res.writeHead 200, {'Content-Type': 'text/html; charset=utf-8'}
-      sub_tree = if p is '' then filetree else p.slice(1).split('/').reduce ((a,x)->a .= children.find (c) -> c.name is x), filetree
-      s = """
-        <head>
-          <script src=\"/adabrumarkup.js\"></script>
-          <title>🖼</title>
-          <link rel="stylesheet" type="text/css" href="/.adabru_markup/style.styl" />
-        </head>
-        <div id='app'>
-        <script>
-          adabruMarkup.printLinker(document.querySelector('\#app'), #{JSON.stringify filetree:sub_tree.children, baseurl:p, searchurl:'/search'})
-        </script>"""
-      res.end s
-    case stats.isFile! and q.download?
+    | '/app.js' is p
+      pipe_stream 'application/javascript', (-> fs.createReadStream "#serverroot/build/adabrumarkup.js")
+    | '/.adabru_markup/style.styl' is p
+      pipe_stream 'text/css', (-> cache "#docroot#p")
+    | r('^/raw/') .test p
       contenttypes = {'.js':'application/javascript', '.css':'text/css', '.styl':'text/css', '.svg':'image/svg+xml', '.png':'image/png', '.jpg':'image/jpg'}
-      res.writeHead 200, {'Content-Type': "#{contenttypes[path.extname lp]}; charset=utf-8"}
-      cache lp
-        ..on 'error', -> res.writeHead 404 ; res.end!
-        ..pipe res
-    case stats.isFile!
-      res.writeHead 200, {'Content-Type': 'text/html; charset=utf-8'}
-      s = """
-        <head>
-          <script src=\"/adabrumarkup.js\"></script>
-          <link rel="stylesheet" type="text/css" href="/.adabru_markup/style.styl" />
-        </head>
-        <div id='app'>
-        <script>
-          var filepath = '#p?download'
-          fetch(filepath, {method: 'get'}).then( r => r.text() ).then( data => {
-            adabruMarkup.printDocument(adabruMarkup.decorateTree(JSON.parse(data)), document.querySelector('\#app'))
-          })
-        </script>"""
-      res.end s
-    default
-      res.writeHead 500 ; res.end!
+      pipe_stream contenttypes[path.extname p], (-> fs.createReadStream "#docroot#{p.substr 4}")
+    | r('^/api/v0.1/') .test p
+      pipe_stream 'application/json', (-> cache "#docroot#{p.substr 9}")
+    | _
+      node = p.split('/').filter((f) -> f isnt '').reduce(((a,x) -> a?.children?.find((c) -> c.name is x)), filetree)
+      switch
+        | node?.children?
+          # folder
+          res.writeHead 200, {'Content-Type': 'text/html; charset=utf-8'}
+          s = """
+            <head>
+              <script src=\"/app.js\"></script>
+              <title>🖼</title>
+              <link rel="stylesheet" type="text/css" href="/.adabru_markup/style.styl" />
+            </head>
+            <div id='app'>
+            <script>
+              adabruMarkup.printLinker(document.querySelector('\#app'), #{JSON.stringify filetree:node.children, baseurl:p.substr(1), searchurl:'/search'})
+            </script>"""
+          res.end s
+        | node?.name?
+          # file
+          res.writeHead 200, {'Content-Type': 'text/html; charset=utf-8'}
+          s = """
+            <head>
+              <script src=\"/app.js\"></script>
+              <link rel="stylesheet" type="text/css" href="/.adabru_markup/style.styl" />
+            </head>
+            <div id='app'>
+            <script>
+              var filepath = '/api/v0.1#p'
+              fetch(filepath, {method: 'get'}).then( r => r.text() ).then( data => {
+                adabruMarkup.printDocument(adabruMarkup.decorateTree(JSON.parse(data)), document.querySelector('\#app'))
+              })
+            </script>"""
+          res.end s
+        | _ => not_found!
 
 server.listen port, hostname, -> console.log "Server running at http://#{hostname}:#{port}/"

@@ -18,11 +18,11 @@ AdabruCodeContainer = React.createClass do
   componentDidMount: ->
     if @props.import?
       self = @
-      fetch(self.props.import[0], {method: 'get'})
+      fetch(self.props.import.url, {method: 'get'})
       .then (response) ->
         response.text()
       .then (text) ->
-        if self.props.import[1] == 'nocomments'
+        if self.props.import.options[0] == 'nocomments'
           # remove all comments and preceding linebreaks
           text = text.replace(/\n?\n[ \t]*\/\/.*/g, '')
         self.setState { importedContent: text }
