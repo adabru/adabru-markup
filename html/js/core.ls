@@ -236,7 +236,7 @@ adabruMarkup =
         a({href: url}, url)
       case 'Emphasis_Italic' then em({},   @printChildren(ast))
       case 'Emphasis_Bold' then strong({},   @printChildren(ast))
-      case 'Image' then img({src: @printChild(ast, 'Rawurl'), alt: @printChild(ast, 'Image_Alt')})
+      case 'Image' then img({src: (@printTree @getChild ast, 'Rawurl'), alt: @printChild(ast, 'Image_Alt')})
       case 'Apielement' then span({className: 'apielement'},    @printChildren(ast))
       case 'Keystroke' then kbd({},   @printChildren(ast))
       case 'Key' then span({className: 'keystroke'}, ast.children[0])
