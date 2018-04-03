@@ -22,9 +22,16 @@ AdabruCodeContainer = React.createClass do
       .then (response) ->
         response.text()
       .then (text) ->
-        if self.props.import.options[0] == 'nocomments'
-          # remove all comments and preceding linebreaks
-          text = text.replace(/\n?\n[ \t]*\/\/.*/g, '')
+        for o in self.props.import.options
+          switch
+            | 'nocomments' is o
+              # remove all comments and preceding linebreaks
+              text = text.replace(/\n?\n[ \t]*\/\/.*/g, '')
+            | /^\/.*\/$/ is o
+              console.log text.length
+              # keep only matching group
+              text = (new RegExp o.substr 1, o.length - 2).exec(text)?.1 or "regex match failed, check code-import option"
+              console.log text.length
         self.setState { importedContent: text }
   render: ->
     if not @props.import?
