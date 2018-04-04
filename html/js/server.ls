@@ -37,9 +37,10 @@ hostname = args.bind ? args.b ? '127.0.7.1'
 port = args.port ? args.p ? 7000
 serverroot = path.dirname process.argv.1
 docroot = args.dir ? args.d ? '.'
+cacheroot = args.cache ? "#docroot/.adabru_markup/cache"
 
 try fs.mkdirSync "#docroot/.adabru_markup" catch e then
-try fs.mkdirSync "#docroot/.adabru_markup/cache" catch e then
+try fs.mkdirSync cacheroot catch e then
 try ignore = new RegExp fs.readFileSync("#docroot/.adabru_markup/ignore", "utf8").split("\n").filter((r)->r isnt '').map((r)->"(^#r)").join("|")
 catch e then ignore = /^$/
 
@@ -59,7 +60,7 @@ searcher = search_machine!
 # only parsed files are cached (no images, scripts, …)
 _cache = {}
 cache = (filepath) ->
-  cachepath = "#docroot/.adabru_markup/cache/#{path.basename filepath}##{hash filepath}"
+  cachepath = "#cacheroot/#{path.basename filepath}##{hash filepath}"
   try cachepath_mtime = fs.statSync(cachepath).mtime.getTime! catch e then cachepath_mtime = 0
   switch
     case _cache[filepath]?.timestamp > fs.statSync(filepath).mtime.getTime!
@@ -73,7 +74,7 @@ cache = (filepath) ->
     default
       s = new stream.Readable {read:(->)}
       writeAndStore = (d) ->
-        s.push _cache[filepath].content = d ; s.push null ; fs.writeFile "#docroot/.adabru_markup/cache/#{path.basename filepath}##{hash filepath}", d, (->)
+        s.push _cache[filepath].content = d ; s.push null ; fs.writeFile cachepath, d, (->)
       filecontent = ''
       fs.createReadStream filepath
         ..on 'error', -> s.emit 'error', new Error "error reading file #filepath"
