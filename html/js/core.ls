@@ -213,8 +213,8 @@ adabruMarkup =
         options = @getChild ast, 'Html_Options'
         if options?
           ast.children = ast.children.filter (c) -> c isnt options
-        options = options.children.0.split(' ').filter((x) -> x isnt '').reduce ((a,x) -> [k,o] = x.split '=' ; a[k] = o || true ; a), {}
-        iframe(srcDoc: @printChildren(ast), className:'inline', height:options.height, "[iframes disabled]")
+          options = options.children.0.split(' ').filter((x) -> x isnt '').reduce ((a,x) -> [k,o] = x.split '=' ; a[k] = o || true ; a), {}
+        iframe(srcDoc: @printChildren(ast), className:'inline', height:options?.height, "[iframes disabled]")
 
       case 'Paragraph' then p({}, @printChildren(ast))
       case 'Newline' then br({})
