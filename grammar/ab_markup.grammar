@@ -61,7 +61,7 @@ Factsheet_Thing ← (!'\n' Span)*
 Factsheet_Facts ← (:'- ' Factsheet_Fact :'\n'?)+
 Factsheet_Fact ← (!'\n' Span)*
 
-Html ← '<html' Html_Options? '>' (!('</html>' | '\n\n\n') .)* ('</html>' | '\n\n\n')
+Html ← :'<html' Html_Options? :'>' (!('</html>' | '\n\n\n') .)* :('</html>' | '\n\n\n')
 Html_Options ← [^>]+
 
 Paragraph ← ( (!'\n' (Newline|Span))+ '\n'? )+
