@@ -7,7 +7,7 @@ Paperroll ← (:'\n' | Block)*
 ### Block Elements
 
 Block ↖ Block_Prefixed | Paragraph | Invalid_Block
-Block_Prefixed ↖ Slides | Header | Blockquote | Codeblock | Linknote | Filetree | List | Table | Info | Warning | Factsheet
+Block_Prefixed ↖ Slides | Header | Blockquote | Codeblock | Linknote | Filetree | List | Table | Info | Warning | Factsheet | Html
 
 Slides ← :'---' :' '? Slides_Id? :'\n' ((Slides_Multislide | Slides_Item) :'--\n'?)* :'---'
 Slides_Id ← (!'\n' .)+
@@ -60,6 +60,9 @@ Factsheet ← :'📍' (:' '? Factsheet_Thing)? :'\n' Factsheet_Facts?
 Factsheet_Thing ← (!'\n' Span)*
 Factsheet_Facts ← (:'- ' Factsheet_Fact :'\n'?)+
 Factsheet_Fact ← (!'\n' Span)*
+
+Html ← '<html' Html_Options? '>' (!('</html>' | '\n\n\n') .)* ('</html>' | '\n\n\n')
+Html_Options ← [^>]+
 
 Paragraph ← ( (!'\n' (Newline|Span))+ '\n'? )+
 Newline ← :'  \n'
