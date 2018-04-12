@@ -41,13 +41,18 @@ cacheroot = args.cache ? "#docroot/.adabru_markup/cache"
 
 try fs.mkdirSync "#docroot/.adabru_markup" catch e then
 try fs.mkdirSync cacheroot catch e then
-try ignore = new RegExp fs.readFileSync("#docroot/.adabru_markup/ignore", "utf8").split("\n").filter((r)->r isnt '').map((r)->"(^#r)").join("|")
-catch e then ignore = /^$/
+try
+  ignore_lines = fs .readFileSync("#docroot/.adabru_markup/ignore", "utf8") .split("\n") .filter((r)->r isnt '')
+  ignore = new RegExp (ignore_lines .filter((r)->r.0 isnt '!') .map((r)->"(#r)") .join("|"))
+  noignore = new RegExp (ignore_lines .filter((r)->r.0 is '!') .map((r)->"(#{r.substr 1})") .join("|"))
+catch e then ignore = /^$/ ; noignore = /^$/
+
+# return (require 'repl').start('> ').context <<< {ignore, noignore}
 
 filetree = (buildFileTree = (p) ->
   if fs.statSync(p).isDirectory!
     name: path.basename p
-    children: [buildFileTree "#p/#f" for f in fs.readdirSync(p).filter (f) -> not (ignore? and ignore.test "#p/#f")]
+    children: [buildFileTree "#p/#f" for f in fs.readdirSync(p).filter (f) -> not ignore.test("#p/#f") or noignore.test("#p/#f")]
   else
     name: path.basename p) docroot
  |> omitEmpty = (f) -> if not f.children? then f else
