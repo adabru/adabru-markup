@@ -1,6 +1,5 @@
 ReactDOM = require 'react-dom'
 React = require 'react'
-$ = require 'jquery'
 {h2, div, section, button, span} = React.DOM
 
 if process.env.BROWSER?
@@ -28,8 +27,10 @@ AdabruSlides = React.createClass do
   }
   componentDidMount: ->
     @setState do
-      slideWidth: @refs['0-0'].offsetWidth + parseInt($(@refs['0-0']).css('margin-right'))
-      slideHeight: @refs['0-0'].offsetHeight + parseInt($(@refs['0-0']).css('margin-bottom'))
+      slideWidth: @refs['0-0'].offsetWidth + parseInt(@refs['0-0'].style['margin-right']||0)
+      slideHeight: @refs['0-0'].offsetHeight + parseInt(@refs['0-0'].style['margin-bottom']||0)
+      # slideWidth: @refs['0-0'].offsetWidth + parseInt($(@refs['0-0']).css('margin-right'))
+      # slideHeight: @refs['0-0'].offsetHeight + parseInt($(@refs['0-0']).css('margin-bottom'))
   render: ->
     buildSlide = (element, x, y) ~>
       if not y?
