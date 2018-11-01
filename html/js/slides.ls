@@ -2,8 +2,7 @@ ReactDOM = require 'react-dom'
 React = require 'react'
 {h2, div, section, button, span} = React.DOM
 
-if process.env.BROWSER?
-  require '../css/slides.styl'
+require '../css/slides.styl'
 
 AdabruSlides = React.createClass do
   displayName: '_Slides'

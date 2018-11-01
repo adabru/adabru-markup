@@ -1,8 +1,7 @@
 require! [react]
 {span} = react.DOM
 
-if process.env.BROWSER?
-  require '../css/span.styl'
+require '../css/span.styl'
 
 AdabruFit = react.createClass do
   displayName: '_Fit'

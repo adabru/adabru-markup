@@ -18,7 +18,7 @@ if process.argv.2 in ["-h", "help", "-help", "--help", void] then return help!
 
 require! [http,fs,util,url,path,stream]
 require! [minimist, stylus]
-adabruMarkup = require './core.ls'
+parser = require './parser.ls'
 {absh} = require '../../search/absh.ls'
 {search_machine} = require '../../search/search.ls'
 
@@ -35,7 +35,7 @@ colors = let e = ((e1,e2,s) --> "\u001b[#{e1}m#{s}\u001b[#{e2}m")
 
 hostname = args.bind ? args.b ? '127.0.7.1'
 port = args.port ? args.p ? 7000
-serverroot = path.dirname process.argv.1
+serverroot = path.dirname process.argv.2
 docroot = args.dir ? args.d ? '.'
 cacheroot = args.cache ? "#docroot/.adabru_markup/cache"
 
@@ -99,11 +99,11 @@ cache = (filepath) ->
               termination_beat = setInterval do
                 (-> log "parsing #{colors.bold path.basename filepath} since #{new Date!.getTime! - start}ms ...")
                 5000
-              ast <- adabruMarkup.parseDocument filecontent .then _
+              ast <- parser.parseDocument filecontent .then _
               clearInterval termination_beat
               end = new Date!.getTime!
               log "#{colors.bold path.basename filepath} parsed in in #{end - start}ms"
-              adabruMarkup.decorateTree ast
+              parser.decorateTree ast
               writeAndStore JSON.stringify ast
       s
 

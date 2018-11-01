@@ -1,12 +1,10 @@
 ReactDOM = require 'react-dom'
 React = require 'react'
 hljs = require 'highlight.js'
-_ = require 'lodash'
 {div, code, span, pre, textarea, button} = React.DOM
 
-if process.env.BROWSER?
-  require 'highlight.js/styles/xcode.css'
-  require '../css/code.styl'
+require 'highlight.js/styles/xcode.css'
+require '../css/code.styl'
 
 # container for async loading as suggested here:
 # http://andrewhfarmer.com/react-ajax-best-practices/

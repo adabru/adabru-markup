@@ -2,10 +2,8 @@ ReactDOM = require 'react-dom'
 React = require 'react'
 {nav, li, a, ul, h1, h2, h3, p, div, br, article, span} = React.DOM
 require '@pleasetrythisathome/react.animate'
-_ = require 'lodash'
 
-if process.env.BROWSER?
-  require '../css/toc.styl'
+require '../css/toc.styl'
 
 
 AdabruTableofcontents = React.createClass do

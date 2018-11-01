@@ -1,13 +1,12 @@
 React = require 'react'
 ReactDOM = require 'react-dom'
 ReactDOMServer = require 'react-dom/server'
-ab_markup_grammar = require './build/ab_markup_grammar.json'
-abp = require 'adabru-parser'
 
-if process.env.BROWSER?
-  require '../css/reset.css'
-  require '../css/core.styl'
-  require '../css/block.styl'
+parser = require './parser.ls'
+
+require '../css/reset.css'
+require '../css/core.styl'
+require '../css/block.styl'
 
 {span, nav, li, a, ol, ul, h1, h2, h3, p, div, br, strong, em, code, kbd, img, table, tbody, tr, th, td, iframe} = React.DOM
 
@@ -18,8 +17,9 @@ if process.env.BROWSER?
 {AdabruFactsheet} = require './factsheet.ls'
 {AdabruFit} = require './span.ls'
 {AdabruLinker} = require './linker.ls'
-window? <<< {React, ReactDOM, abp, grammar: ab_markup_grammar
-  ,AdabruPage, AdabruTableofcontents, AdabruArticle, AdabruFiletree, AdabruCodeContainer, AdabruSlides, AdabruFactsheet, AdabruFit}
+
+# debugging
+window? <<< {React, ReactDOM, AdabruPage, AdabruTableofcontents, AdabruArticle, AdabruFiletree, AdabruCodeContainer, AdabruSlides, AdabruFactsheet, AdabruFit}
 
 AdabruPage = React.createClass do
   displayName: '_Page'
@@ -67,49 +67,13 @@ AdabruPage = React.createClass do
 adabruMarkup =
   parseAndPrint: (document, domNode) ->
     new Promise (fulfill) ->
-      @parseDocument document .catch(console.log).then (ast) ->
-        @decorateTree ast
+      parser.parseDocument document .catch(console.log).then (ast) ->
+        parser.decorateTree ast
         fulfill @printDocument ast, domNode
-
-  parseDocument: (document, startNT='Document') ->
-    abp.parse document, ab_markup_grammar, {startNT:startNT}
 
   printDocument: (ast, domNode) ->
     printedTree = @printTree ast
     if not domNode? then printedTree else ReactDOM.render printedTree, domNode
-
-  decorateTree: (ast) ->
-    # merge strings
-    @visit do
-      ast
-      (ast) ~>
-        ast.children?.some((c) -> not c.name?) and ast.children?.length > 1
-      (ast) ~>
-        for i in [ast.children.length-1 to 1]
-          if ast.children[i].name == undefined and ast.children[i-1].name == undefined
-            ast.children[i-1] += ast.children.splice(i,1)
-
-    # link-references
-    linkReference = {}
-    @visit do
-      ast
-      (ast) ~>
-        ast.name == 'Linknote'
-      (ast) ~>
-        linkReference[@printChild(ast, 'Link_Text')] = @printChild(ast, 'Link_Url')
-    @visit do
-      ast
-      (ast) ~>
-        ast.name == 'Link_Reference'
-      (ast) ~>
-        ast.linkUrl = linkReference[@printChild(ast, 'Link_Text')]
-
-    ast
-
-  # tree utility-functions
-  visit: (ast, filter, action) ->
-    if filter(ast) then action(ast)
-    if ast.children? then ast.children.forEach((child) -> adabruMarkup.visit(child, filter, action))
 
   getChild: (ast, name) ->
     ast.children?.find (c) -> c.name == name
@@ -270,8 +234,8 @@ adabruMarkup =
     ReactDOM.render React.createElement(AdabruLinker, args), domNode
 
 exports <<<
-  parseDocument: adabruMarkup.parseDocument.bind(adabruMarkup)
-  decorateTree: adabruMarkup.decorateTree.bind(adabruMarkup)
+  parseDocument: parser.parseDocument
+  decorateTree: parser.decorateTree
   printDocument: adabruMarkup.printDocument.bind(adabruMarkup)
   parseAndPrint: adabruMarkup.parseAndPrint.bind(adabruMarkup)
   printLinker: adabruMarkup.printLinker

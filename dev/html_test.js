@@ -15,7 +15,6 @@ testFile = (process.argv[2] != null) ? process.argv[2] : './markup/test.md'
 
 document = fs.readFileSync(testFile, 'utf8')
 rawhtml = ReactDOMServer.renderToStaticMarkup( adabruMarkup.parseAndPrint(document) )
-prettyhtml = require("html").prettyPrint(rawhtml, {indent_size: 2})
-console.log( prettyhtml )
+console.log( rawhtml )
 
 // require('repl').start('node> ');return

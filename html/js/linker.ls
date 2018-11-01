@@ -1,8 +1,7 @@
 require! [react]
 {ul,li,a,div,span,textarea} = react.DOM
 
-if process.env.BROWSER?
-  require '../css/linker.styl'
+require '../css/linker.styl'
 
 AdabruLinker = react.createClass do
   displayName: '_Linker'

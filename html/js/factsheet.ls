@@ -2,8 +2,7 @@ ReactDOM = require 'react-dom'
 React = require 'react'
 {div, h1, ul, li} = React.DOM
 
-if process.env.BROWSER?
-  require '../css/factsheet.styl'
+require '../css/factsheet.styl'
 
 AdabruFactsheet = React.createClass do
   displayName: '_Factsheet'
