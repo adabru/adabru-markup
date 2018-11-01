@@ -154,7 +154,7 @@ AdabruArticle = React.createClass do
           @setState transformOrigin:_a
           if a isnt _a
             @refs.blocks.style.transformOrigin = "50% #{_a}px"
-    if _.isEqual(@props, nextProps) and @state.ui_state == nextState.ui_state
+    if @state.ui_state == nextState.ui_state and @props?.items?.length == nextProps?.items?.length
       false
     else
       true
